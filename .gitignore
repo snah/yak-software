@@ -1,0 +1,8 @@
+*.swp
+/embedded/lib/
+/embedded/*/nbproject/private/
+/embedded/*/build/default/
+/embedded/*/dist/default/
+/embedded/*/disassembly/
+/embedded/*/nbproject/Makefile-genesis.properties
+/embedded/*/nbproject/Makefile-variables.mk
