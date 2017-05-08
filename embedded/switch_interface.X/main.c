@@ -64,36 +64,36 @@ void main(void) {
 }
 
 /* Callbacks. These function names are set in usb_config.h. */
-void app_set_configuration_callback(uint8_t configuration)
+void SET_CONFIGURATION_CALLBACK(uint8_t configuration)
 {
 
 }
-uint16_t app_get_device_status_callback()
+uint16_t GET_DEVICE_STATUS_CALLBACK()
 {
 	return 0x0000;
 }
 
-void app_endpoint_halt_callback(uint8_t endpoint, bool halted)
+void ENDPOINT_HALT_CALLBACK(uint8_t endpoint, bool halted)
 {
 
 }
 
-int8_t app_set_interface_callback(uint8_t interface, uint8_t alt_setting)
-{
-	return 0;
-}
-
-int8_t app_get_interface_callback(uint8_t interface)
+int8_t SET_INTERFACE_CALLBACK(uint8_t interface, uint8_t alt_setting)
 {
 	return 0;
 }
 
-void app_out_transaction_callback(uint8_t endpoint)
+int8_t GET_INTERFACE_CALLBACK(uint8_t interface)
+{
+	return 0;
+}
+
+void OUT_TRANSACTION_CALLBACK(uint8_t endpoint)
 {
 
 }
 
-void app_in_transaction_complete_callback(uint8_t endpoint)
+void IN_TRANSACTION_COMPLETE_CALLBACK(uint8_t endpoint)
 {
 
 }
@@ -107,7 +107,7 @@ static int8_t data_cb(bool transfer_ok, void *context)
 	return 0;
 }
 
-int8_t app_unknown_setup_request_callback(const struct setup_packet *setup)
+int8_t UNKNOWN_SETUP_REQUEST_CALLBACK(const struct setup_packet *setup)
 {
 #define MIN(X,Y) ((X)<(Y)?(X):(Y))
 
@@ -154,17 +154,17 @@ int8_t app_unknown_setup_request_callback(const struct setup_packet *setup)
 #undef MIN
 }
 
-int16_t app_unknown_get_descriptor_callback(const struct setup_packet *pkt, const void **descriptor)
+int16_t UNKNOWN_GET_DESCRIPTOR_CALLBACK(const struct setup_packet *pkt, const void **descriptor)
 {
 	return -1;
 }
 
-void app_start_of_frame_callback(void)
+void START_OF_FRAME_CALLBACK(void)
 {
 
 }
 
-void app_usb_reset_callback(void)
+void USB_RESET_CALLBACK(void)
 {
 
 }

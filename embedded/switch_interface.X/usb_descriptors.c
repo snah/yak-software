@@ -3,66 +3,65 @@
 
 #include "usb_config.h"
 
+
+const struct device_descriptor USB_DEVICE_DESCRIPTOR =
+{
+	sizeof(USB_DEVICE_DESCRIPTOR),
+	DESC_DEVICE,
+	USB_VERSION,
+	DEVICE_CLASS,
+	DEVICE_SUBCLASS,
+	DEVICE_PROTOCOL,
+	EP_0_MAX_PACKET_LENGTH,
+	ID_VENDOR,
+	ID_PRODUCT,
+	DEVICE_VERSION,
+	VENDOR_STRING_INDEX,
+	PRODUCT_STRING_INDEX,
+	NO_STRING,
+	NUMBER_OF_CONFIGURATIONS
+};
+
+
 struct configuration_packet {
 	struct configuration_descriptor  config;
 	struct interface_descriptor      interface;
 	struct endpoint_descriptor       ep1_in;
 };
 
-
-const struct device_descriptor this_device_descriptor =
-{
-	sizeof(this_device_descriptor), // bLength.
-	DESC_DEVICE,					// bDescriptorType.
-	0x0200,							// bcdUSB (USB 2.0).
-	0x00,							// bDeviceClass.
-	0x00,							// bDeviceSubClass.
-	0x00,							// bProtocol.
-	EP_0_LEN,						// bMaxPacketSize0.
-	0xA0A0,							// idVendor.
-	0x0001,							// idProduct.
-	0x0001,							// bcdDevice (1.0).
-	1,								// iManufacturer.
-	2,								// iProduct.
-	0,								// iSerialNumber.
-	NUMBER_OF_CONFIGURATIONS		// bNumConfigurations
-};
-
 static const struct configuration_packet configuration =
 {
 	{
-	sizeof(struct configuration_descriptor),	// bLength.
-	DESC_CONFIGURATION,							// bDescriptorType.
-	sizeof(configuration),					// wTotalLength.
-	1,											// bNumInterfaces.
-	1,											// bConfigurationValue.
-	2,											// iConfiguration.
-	0x80,										// bmAttributes.
-	100/2,										// MaxPower = 100/2 -> 100mA.
+		sizeof(struct configuration_descriptor),
+		DESC_CONFIGURATION,
+		sizeof(configuration),
+		NUMBER_OF_INTERFACES,
+		CONFIGURATION_INDEX,
+		NO_STRING,
+		SELF_POWERED,
+		MAX_CURRENT
 	},
 
 	{
-
-	sizeof(struct interface_descriptor),		// bLength.
-	DESC_INTERFACE,								// bDescriptorType.
-	0x0,										// InterfaceNumber.
-	0x0,										// AlternateSetting.
-	NUM_ENDPOINT_NUMBERS,						// bNumEndpoints.
-	0xff,										// bInterfaceClass.
-	0x00,										// bInterfaceSubclass.
-	0x00,										// bInterfaceProtocol.
-	0x00,										// iInterface.
+	sizeof(struct interface_descriptor),
+		DESC_INTERFACE,
+		INTERFACE_INDEX,
+		ALTERNATIVE_SETTING_INDEX,
+		NUMBER_OF_ENDPOINTS,
+		VENDOR_SPECIFIC_INTERFACE_CLASS,
+		INTERFACE_SUBCLASS,
+		INTERFACE_PROTOCOL,
+		NO_STRING
 	},
 
 	{
-
-	sizeof(struct endpoint_descriptor),			// bLength
-	DESC_ENDPOINT,								// bDescriptorType.
-	0x01 | 0x80,								// bEndpointAddress = 1 | 0x80=IN
-	EP_INTERRUPT,								// bmAttributes.
-	64,											// wMaxPacketSize.
-	10,											// bInterval in ms.
-	},
+		sizeof(struct endpoint_descriptor),
+		DESC_ENDPOINT,
+		ENDPOINT_ADDRESS | ENDPOINT_DIRECTION_IN,
+		EP_INTERRUPT,
+		ENDPOINT_1_MAX_PACKET_SIZE,
+		ENDPOINT_1_POLLING_INTERVAL
+	}
 };
 
 static const struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t lang; } str00 = {
@@ -83,7 +82,7 @@ static const struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[20]
 	{'Y','a','k',' ','S','w','i','t','c','h',' ','i','n','t','e','r','f','a','c','e'}
 };
 
-int16_t usb_application_get_string(uint8_t string_number, const void **ptr)
+int16_t USB_STRING_DESCRIPTOR_FUNC(uint8_t string_number, const void **ptr)
 {
 	if (string_number == 0) {
 		*ptr = &str00;
@@ -101,7 +100,7 @@ int16_t usb_application_get_string(uint8_t string_number, const void **ptr)
 	return -1;
 }
 
-const struct configuration_descriptor *usb_application_config_descs[] =
+const struct configuration_descriptor *USB_CONFIG_DESCRIPTOR_MAP[] =
 {
 	(struct configuration_descriptor*) &configuration,
 };
