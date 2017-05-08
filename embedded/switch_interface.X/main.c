@@ -5,6 +5,8 @@
  * Created on May 7, 2017, 9:05 PM
  */
 
+#include "main.h"
+
 #include <xc.h>
 #include <string.h>
 #pragma warning disable 520
@@ -30,8 +32,33 @@
 #pragma config LPBOR = ON
 #pragma config LVP = ON
 
-void main(void) {
-	OSCCONbits.IRCF = 0b1111; // 16MHz HFINTOSC postscalar
+
+void interrupt isr()
+{
+	usb_service();
+}
+
+void main()
+{
+	setup();
+
+	while (1) {
+		if (usb_is_configured() && endpoint_ready())
+		{
+			t_state state = get_state();
+			send_state_if_changed(state);
+		}
+	}
+}
+
+t_state get_state()
+{
+	return PORTCbits.RC2;
+}
+
+void setup()
+{
+	OSCCONbits.IRCF = 0b1111; // 16MHz HFINTOSC postscaler.
 
 	// Setup USB clock-tuning.
 	ACTCONbits.ACTSRC = 1;
@@ -46,143 +73,28 @@ void main(void) {
     TRISCbits.TRISC2 = 1;
 
 	usb_init();
+}
 
-	while (1) {
-		if (usb_is_configured() &&
-		    !usb_in_endpoint_halted(1) &&
-		    !usb_in_endpoint_busy(1)) {
+void send_state_if_changed(unsigned char state)
+{
+	static t_state last_state = 0xff;
 
-			unsigned char *buf = usb_get_in_buffer(1);
-			
-            if (PORTCbits.RC2)
-                buf[0] = 0x01;
-            else
-                buf[0] = 0x00;
-			usb_send_in_buffer(1, 1);
-		}
+	if (state != last_state)
+	{
+		send_state(state);
+		last_state = state;
 	}
 }
 
-/* Callbacks. These function names are set in usb_config.h. */
-void SET_CONFIGURATION_CALLBACK(uint8_t configuration)
+void send_state(t_state state)
 {
+	unsigned char *buffer = usb_get_in_buffer(1);
 
-}
-uint16_t GET_DEVICE_STATUS_CALLBACK()
-{
-	return 0x0000;
+	buffer[0] = state;
+	usb_send_in_buffer(1, 1);
 }
 
-void ENDPOINT_HALT_CALLBACK(uint8_t endpoint, bool halted)
+bool endpoint_ready()
 {
-
+   return !usb_in_endpoint_halted(1) && !usb_in_endpoint_busy(1);
 }
-
-int8_t SET_INTERFACE_CALLBACK(uint8_t interface, uint8_t alt_setting)
-{
-	return 0;
-}
-
-int8_t GET_INTERFACE_CALLBACK(uint8_t interface)
-{
-	return 0;
-}
-
-void OUT_TRANSACTION_CALLBACK(uint8_t endpoint)
-{
-
-}
-
-void IN_TRANSACTION_COMPLETE_CALLBACK(uint8_t endpoint)
-{
-
-}
-
-static char buf[512];
-
-static int8_t data_cb(bool transfer_ok, void *context)
-{
-	/* For OUT control transfers, data from the data stage of the request
-	 * is in buf[]. */
-	return 0;
-}
-
-int8_t UNKNOWN_SETUP_REQUEST_CALLBACK(const struct setup_packet *setup)
-{
-#define MIN(X,Y) ((X)<(Y)?(X):(Y))
-
-	/* This handler handles request 254/dest=other/type=vendor only.*/
-	if (setup->bRequest != 245 ||
-	    setup->REQUEST.destination != 3 /*other*/ ||
-	    setup->REQUEST.type != 2 /*vendor*/)
-		return -1;
-
-	if (setup->REQUEST.direction == 0/*OUT*/) {
-		if (setup->wLength == 0) {
-			/* There will be NO data stage. This sends back the
-			 * STATUS stage packet. */
-			usb_send_data_stage(NULL, 0, data_cb, NULL);
-		}
-		memset(buf,0,sizeof(buf));
-
-		/* Set up an OUT data stage (we will receive data) */
-		if (setup->wLength > sizeof(buf)) {
-			/* wLength is too big. Return -1 to
-			   refuse this transfer*/
-			return -1;
-		}
-		usb_start_receive_ep0_data_stage(buf, setup->wLength, &data_cb, NULL);
-	}
-	else {
-		/* Direction is 1 (IN) */
-		size_t i;
-
-		for (i = 0; i < sizeof(buf); i++) {
-			buf[i] = sizeof(buf)-i;
-		}
-
-		/* Set up an OUT data stage (we will receive data) */
-		if (setup->wLength > sizeof(buf)) {
-			/* wLength is too big. Return -1 to
-			   refuse this transfer*/
-			return -1;
-		}
-		usb_send_data_stage(buf ,setup->wLength, data_cb, NULL);
-	}
-
-	return 0; /* 0 = can handle this request. */
-#undef MIN
-}
-
-int16_t UNKNOWN_GET_DESCRIPTOR_CALLBACK(const struct setup_packet *pkt, const void **descriptor)
-{
-	return -1;
-}
-
-void START_OF_FRAME_CALLBACK(void)
-{
-
-}
-
-void USB_RESET_CALLBACK(void)
-{
-
-}
-
-#ifdef _PIC14E
-void interrupt isr()
-{
-	usb_service();
-}
-#elif _PIC18
-
-#ifdef __XC8
-void interrupt high_priority isr()
-{
-	usb_service();
-}
-#elif _PICC18
-#error need to make ISR
-#endif
-
-#endif
