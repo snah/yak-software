@@ -42,18 +42,14 @@ void main()
 {
 	setup();
 
-	while (1) {
+	while (1)
+	{
 		if (usb_is_configured() && endpoint_ready())
 		{
 			t_state state = get_state();
 			send_state_if_changed(state);
 		}
 	}
-}
-
-t_state get_state()
-{
-	return PORTCbits.RC2;
 }
 
 void setup()
@@ -73,6 +69,11 @@ void setup()
     TRISCbits.TRISC2 = 1;
 
 	usb_init();
+}
+
+t_state get_state()
+{
+	return PORTCbits.RC2;
 }
 
 void send_state_if_changed(unsigned char state)
