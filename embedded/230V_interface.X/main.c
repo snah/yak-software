@@ -42,12 +42,26 @@ void main()
 {
 	setup();
 
+	uint8_t len;
+	const unsigned char *data;
+
+	TRISAbits.TRISA5 = 0;
+	LATAbits.LATA5 = 1;
+
 	while (1)
 	{
-		if (usb_is_configured() && endpoint_ready())
+		if (usb_is_configured() && usb_out_endpoint_has_data(1))
 		{
-			t_state state = get_state();
-			send_state_if_changed(state);
+			len = usb_get_out_buffer(1, &data);
+			if (data[0])
+			{
+				LATAbits.LATA5 = 1;
+			}
+			else
+			{
+				LATAbits.LATA5 = 0;
+			}
+			usb_arm_out_endpoint(1);
 		}
 	}
 }
@@ -63,39 +77,6 @@ void setup()
 	// Enable interrupts.
 	INTCONbits.PEIE = 1;
 	INTCONbits.GIE = 1;
-    
-	// Setup pins.
-    ANSELC = 0;
-    TRISCbits.TRISC2 = 1;
 
 	usb_init();
-}
-
-t_state get_state()
-{
-	return PORTCbits.RC2;
-}
-
-void send_state_if_changed(unsigned char state)
-{
-	static t_state last_state = 0xff;
-
-	if (state != last_state)
-	{
-		send_state(state);
-		last_state = state;
-	}
-}
-
-void send_state(t_state state)
-{
-	unsigned char *buffer = usb_get_in_buffer(1);
-
-	buffer[0] = state;
-	usb_send_in_buffer(1, 1);
-}
-
-bool endpoint_ready()
-{
-   return !usb_in_endpoint_halted(1) && !usb_in_endpoint_busy(1);
 }

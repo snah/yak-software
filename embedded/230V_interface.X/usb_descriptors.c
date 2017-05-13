@@ -57,7 +57,7 @@ static const struct configuration_packet configuration =
 	{
 		sizeof(struct endpoint_descriptor),
 		DESC_ENDPOINT,
-		ENDPOINT_ADDRESS | ENDPOINT_DIRECTION_IN,
+		ENDPOINT_ADDRESS | ENDPOINT_DIRECTION_OUT,
 		EP_INTERRUPT,
 		ENDPOINT_1_MAX_PACKET_SIZE,
 		ENDPOINT_1_POLLING_INTERVAL
@@ -76,10 +76,10 @@ static const struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[4];
 	{'Y','a','k','.'}
 };
 
-static const struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[20]; } product_string = {
+static const struct {uint8_t bLength;uint8_t bDescriptorType; uint16_t chars[18]; } product_string = {
 	sizeof(product_string),
 	DESC_STRING,
-	{'Y','a','k',' ','S','w','i','t','c','h',' ','i','n','t','e','r','f','a','c','e'}
+	{'Y','a','k',' ','2','3','0','V',' ','i','n','t','e','r','f','a','c','e'}
 };
 
 int16_t USB_STRING_DESCRIPTOR_FUNC(uint8_t string_number, const void **ptr)
