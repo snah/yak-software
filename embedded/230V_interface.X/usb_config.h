@@ -28,7 +28,7 @@
 // Other settings.
 
 #define ID_VENDOR 0x04D8
-#define ID_PRODUCT 0x5900
+#define ID_PRODUCT 0x5901
 #define DEVICE_VERSION 0x0001
 
 #define USB_VERSION 0x0200			// USB 2.0
