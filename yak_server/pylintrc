@@ -1,0 +1,12 @@
+[MESSAGE CONTROL]
+disable = C0111,R0903,R0904,I0011
+enable = R0801
+
+[BASIC]
+attr-rgx = ([a-z_][a-z0-9_]{2,30}$)|([A-Z_][a-zA-Z0-9]{2,30}$)
+variable-rgx = ([a-z_][a-z0-9_]{2,30}$)|([A-Z_][a-zA-Z0-9]{2,30}$)
+method-rgx = [a-z_][a-z0-9_]{2,100}$
+include-naming-hint = y
+
+[TYPECHECK]
+generated-members = _attributes,Mutable,Immutable
