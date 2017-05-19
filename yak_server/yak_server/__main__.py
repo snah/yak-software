@@ -1,4 +1,9 @@
+#! /usr/bin/env python3
+
 import usb
+
+def server_running():
+    return True
 
 def main():
     switch_device = usb.core.find(idVendor=0x04d8, idProduct=0x5900)
@@ -23,7 +28,7 @@ def main():
     AC_interface = AC_conf.interfaces()[0]
     AC_endpoint = AC_interface.endpoints()[0]
 
-    while True:
+    while server_running():
         try:
             data = switch_endpoint.read(1)
         except usb.USBError:
