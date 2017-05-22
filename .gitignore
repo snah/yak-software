@@ -6,3 +6,4 @@
 /embedded/*/disassembly/
 /embedded/*/nbproject/Makefile-genesis.properties
 /embedded/*/nbproject/Makefile-variables.mk
+*__pycache__
