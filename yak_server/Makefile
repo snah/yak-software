@@ -3,7 +3,7 @@ PYTHON_FILES := $(shell find yak_server -name '*.py')
 PYTHON_FILES += $(shell find test -name '*.py')
 PYTHON_FILES += setup.py
 
-NOSE_OPTIONS = --plugin nose2.plugins.doctests --with-doctest
+NOSE_OPTIONS = 
 
 default: coverage lint
 
