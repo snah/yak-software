@@ -74,7 +74,7 @@ class TestUSBDevice(test.util.TestCase):
         self.assertEqual(usb_devices, [])
 
     def test_connect_detaches_driver_and_claims_interface(self):
-        manager_mock = unittest.mock.Mock()
+        manager_mock = unittest.mock.MagicMock()
         mock_raw_device = manager_mock.raw_device
         self.mock_usb_util.claim_interface = manager_mock.claim_interface
         usb_device = yak_server.usbdevice.USBDevice(mock_raw_device)
@@ -85,7 +85,7 @@ class TestUSBDevice(test.util.TestCase):
         manager_mock.assert_has_calls(expected_calls)
 
     def test_log_detaching_kernel_driver(self):
-        mock_raw_device = unittest.mock.Mock()
+        mock_raw_device = unittest.mock.MagicMock()
         with self.assertLogs('yak_server.usbdevice', level='DEBUG') as logs:
             usb_device = yak_server.usbdevice.USBDevice(mock_raw_device)
             usb_device.connect()
@@ -94,13 +94,13 @@ class TestUSBDevice(test.util.TestCase):
             self.assertIn('detaching', log_output.lower())
 
     def test_connect_succeeds_if_no_kernel_driver_attached(self):
-        mock_raw_device = unittest.mock.Mock()
+        mock_raw_device = unittest.mock.MagicMock()
         mock_raw_device.is_kernel_driver_active.return_value = False
         usb_device = yak_server.usbdevice.USBDevice(mock_raw_device)
         usb_device.connect()
 
     def test_connect_raises_exception_if_unable_to_detach_kernel_driver(self):
-        mock_raw_device = unittest.mock.Mock()
+        mock_raw_device = unittest.mock.MagicMock()
         mock_raw_device.detach_kernel_driver.side_effect = usb.USBError('')
         mock_raw_device.is_kernel_driver_active.return_value = True
         usb_device = yak_server.usbdevice.USBDevice(mock_raw_device)
@@ -120,10 +120,41 @@ class TestUSBDevice(test.util.TestCase):
             except yak_server.usbdevice.USBError:
                 pass
 
+    def test_log_claim_interface(self):
+        mock_raw_device = unittest.mock.MagicMock()
+        with self.assertLogs('yak_server.usbdevice', level='DEBUG') as logs:
+            usb_device = yak_server.usbdevice.USBDevice(mock_raw_device)
+            usb_device.connect()
+
+            log_output = '\n'.join(logs.output)
+            self.assertIn('claim', log_output.lower())
+            self.assertIn('interface', log_output.lower())
+
+    def test_connect_raises_exception_if_unable_to_claim_interface(self):
+        self.mock_usb_util.claim_interface.side_effect = usb.USBError('')
+        mock_raw_device = unittest.mock.Mock()
+        usb_device = yak_server.usbdevice.USBDevice(mock_raw_device)
+
+        with self.assertRaises(yak_server.usbdevice.USBError):
+            usb_device.connect()
+
+    def test_connect_raises_exception_if_unable_to_claim_interface(self):
+        self.mock_usb_util.claim_interface.side_effect = usb.USBError('')
+        mock_raw_device = unittest.mock.Mock()
+        usb_device = yak_server.usbdevice.USBDevice(mock_raw_device)
+
+        with self.assertLogs('yak_server.usbdevice', level='ERROR') as logs:
+            try:
+                usb_device.connect()
+            except yak_server.usbdevice.USBError:
+                pass
+
+
     def test_is_input_returns_true_for_in_endpoint(self):
         self.mock_usb_util.endpoint_direction.return_value = usb.util.ENDPOINT_IN
         endpoint_address = self.usb_device_mocks.endpoint.bEndpointAddress
         usb_device = yak_server.usbdevice.USBDevice(self.usb_device_mocks.raw_device)
+        usb_device.connect()
         
         self.assertTrue(usb_device.is_input())
         self.mock_usb_util.endpoint_direction.assert_called_with(endpoint_address)
@@ -132,6 +163,7 @@ class TestUSBDevice(test.util.TestCase):
         self.mock_usb_util.endpoint_direction.return_value = usb.util.ENDPOINT_OUT
         endpoint_address = self.usb_device_mocks.endpoint.bEndpointAddress
         usb_device = yak_server.usbdevice.USBDevice(self.usb_device_mocks.raw_device)
+        usb_device.connect()
         
         self.assertFalse(usb_device.is_input())
         self.mock_usb_util.endpoint_direction.assert_called_with(endpoint_address)
@@ -140,6 +172,7 @@ class TestUSBDevice(test.util.TestCase):
         self.mock_usb_util.endpoint_direction.return_value = usb.util.ENDPOINT_OUT
         endpoint_address = self.usb_device_mocks.endpoint.bEndpointAddress
         usb_device = yak_server.usbdevice.USBDevice(self.usb_device_mocks.raw_device)
+        usb_device.connect()
         
         self.assertTrue(usb_device.is_output())
         self.mock_usb_util.endpoint_direction.assert_called_with(endpoint_address)
@@ -148,16 +181,28 @@ class TestUSBDevice(test.util.TestCase):
         self.mock_usb_util.endpoint_direction.return_value = usb.util.ENDPOINT_IN
         endpoint_address = self.usb_device_mocks.endpoint.bEndpointAddress
         usb_device = yak_server.usbdevice.USBDevice(self.usb_device_mocks.raw_device)
+        usb_device.connect()
         
         self.assertFalse(usb_device.is_output())
         self.mock_usb_util.endpoint_direction.assert_called_with(endpoint_address)
 
     def test_read(self):
         device = yak_server.usbdevice.USBDevice(self.usb_device_mocks.raw_device)
+        device.connect()
 
         data = device.read(4)
 
         self.usb_device_mocks.endpoint.read.assert_called_with(4)
+        self.assertEqual(data, self.usb_device_mocks.endpoint.read())
+
+    def test_read_returns_empty_bytes_object_on_timout(self):
+        self.usb_device_mocks.endpoint.read.side_effect = usb.USBError('')
+        device = yak_server.usbdevice.USBDevice(self.usb_device_mocks.raw_device)
+        device.connect()
+
+        data = device.read(4)
+
+        self.assertEqual(data, b'')
 
     def _make_usb_device_mocks(self):
         usb_device_mocks = unittest.mock.Mock()

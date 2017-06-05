@@ -35,10 +35,12 @@ def find(**search_parameters):
     find_kwargs = _translate_search_parameters(search_parameters)
     raw_devices = usb.core.find(**find_kwargs, find_all=True)
 
-    for raw_device in raw_devices:
-        _logger.info('Found usb device: %s', repr(raw_device))
+    devices = tuple(USBDevice(raw_device) for raw_device in raw_devices)
 
-    return (USBDevice(raw_device) for raw_device in raw_devices )
+    for device in devices:
+        _logger.info('Found usb device: %s', device.device_info())
+
+    return devices
     
 
 class USBDevice:
@@ -53,38 +55,71 @@ class USBDevice:
         """Connect to the usb device.
         
         Detach the kernel driver if it is attached and then claim
-        the interface.
+        the interface. This must be done before calling any of the other
+        methods of this class. Changes to the INTERFACE and ENDPOINT
+        attributes after this point are not supported.
         """
-        self._detach_kernel_driver()
+        self._detach_kernel_driver_if_attached()
         self._claim_interface()
+        self._endpoint = self._get_endpoint()
 
     def is_input(self):
-        endpoint = self._get_endpoint()
-        direction = usb.util.endpoint_direction(endpoint.bEndpointAddress)
+        """Return if the device is an input."""
+        endpoint_address = self._endpoint.bEndpointAddress
+        direction = usb.util.endpoint_direction(endpoint_address)
         return direction == usb.util.ENDPOINT_IN
 
     def is_output(self):
+        """Return if the device is an output."""
         return not self.is_input()
 
     def read(self, number_of_bytes):
-        """Read a number of bytes from the device."""
-        endpoint = self._get_endpoint()
-        endpoint.read(number_of_bytes)
+        """Read a number of bytes from the device.
+        
+        If there is no data to be read an empty bytes object is
+        returned."""
+        try:
+            return self._endpoint.read(number_of_bytes)
+        except usb.core.USBError:
+            return b''
+
+    def _detach_kernel_driver_if_attached(self):
+        if self._is_kernel_driver_attached():
+            self._detach_kernel_driver()
+
+    def _is_kernel_driver_attached(self):
+        return self.raw_device.is_kernel_driver_active()
 
     def _detach_kernel_driver(self):
-        if self.raw_device.is_kernel_driver_active():
-            _logger.info('Detaching kernel driver from device %s', repr(self.raw_device))
-            try:
-                self.raw_device.detach_kernel_driver(self.INTERFACE)
-            except usb.USBError as e:
-                _logger.error('Error detaching kernel driver for interface %s:\n%s',
-                              self.raw_device, str(e))
-                raise USBError from e
+        _logger.info('Detaching kernel driver from device %s', self.device_info())
+        try:
+            self.raw_device.detach_kernel_driver(self.INTERFACE)
+        except usb.core.USBError as e:
+            self._handle_detach_kernel_driver_exception(e)
+
+    def _handle_detach_kernel_driver_exception(self, e):
+        msg = 'Error detaching kernel driver for interface {} of device {}:\n{}'.format(
+                      self.INTERFACE, self.raw_device, str(e))
+        _logger.error(msg)
+        raise USBError(msg) from e
 
     def _claim_interface(self):
-        usb.util.claim_interface(self.raw_device, self.INTERFACE)
+        _logger.info('Claiming interface %d for device %s', self.INTERFACE, self.device_info())
+        try:
+            usb.util.claim_interface(self.raw_device, self.INTERFACE)
+        except usb.core.USBError as e:
+            self._handle_claim_interface_exception(e)
+
+    def _handle_claim_interface_exception(self, e):
+        msg = 'Error claiming interface {} of device {}:\n{}'.format(
+                      self.INTERFACE, self.raw_device, str(e))
+        _logger.error(msg)
+        raise USBError(msg) from e
 
     def _get_endpoint(self):
         active_configuration = self.raw_device.get_active_configuration()
         interface = active_configuration.interfaces()[self.INTERFACE]
         return interface.endpoints()[self.ENDPOINT]
+
+    def device_info(self):
+        return repr(self.raw_device)
