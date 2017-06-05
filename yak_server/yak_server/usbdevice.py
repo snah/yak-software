@@ -84,10 +84,20 @@ class USBDevice:
             return b''
 
     def write(self, data):
+        """Write the given bytes to the device.
+        
+        Return the number of bytes written.
+        """
         try:
             return self._endpoint.write(data)
-        except usb.core.USBError:
-            raise
+        except usb.core.USBError as e:
+            self._handle_write_exception(e)
+
+    def _handle_write_exception(self, e):
+        msg = 'Error when writing to interface {} of device {}: {}'.format(
+                  self.INTERFACE, self.device_info(), str(e))
+        _logger.error(msg)
+        raise USBError(msg) from e
 
     def _detach_kernel_driver_if_attached(self):
         if self._is_kernel_driver_attached():
@@ -118,7 +128,7 @@ class USBDevice:
 
     def _handle_claim_interface_exception(self, e):
         msg = 'Error claiming interface {} of device {}:\n{}'.format(
-                      self.INTERFACE, self.raw_device, str(e))
+                      self.INTERFACE, self.device_info(), str(e))
         _logger.error(msg)
         raise USBError(msg) from e
 

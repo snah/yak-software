@@ -204,6 +204,34 @@ class TestUSBDevice(test.util.TestCase):
 
         self.assertEqual(data, b'')
 
+    def test_write(self):
+        device = yak_server.usbdevice.USBDevice(self.usb_device_mocks.raw_device)
+        device.connect()
+
+        number_of_bytes_written = device.write(b'test')
+
+        self.usb_device_mocks.endpoint.write.assert_called_with(b'test')
+        self.assertEqual(number_of_bytes_written, self.usb_device_mocks.endpoint.write())
+
+    def test_write_raises_exception_on_error(self):
+        device = yak_server.usbdevice.USBDevice(self.usb_device_mocks.raw_device)
+        self.usb_device_mocks.endpoint.write.side_effect = usb.USBError('')
+        device.connect()
+
+        with self.assertRaises(yak_server.usbdevice.USBError):
+            device.write(b'test')
+
+    def test_write_logs_error(self):
+        device = yak_server.usbdevice.USBDevice(self.usb_device_mocks.raw_device)
+        self.usb_device_mocks.endpoint.write.side_effect = usb.USBError('')
+        device.connect()
+
+        with self.assertLogs('yak_server.usbdevice', level='ERROR') as logs:
+            try:
+                device.write(b'test')
+            except yak_server.usbdevice.USBError:
+                pass
+
     def _make_usb_device_mocks(self):
         usb_device_mocks = unittest.mock.Mock()
         usb_device_mocks.raw_device = unittest.mock.Mock()
