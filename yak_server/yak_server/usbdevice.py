@@ -83,12 +83,18 @@ class USBDevice:
         except usb.core.USBError:
             return b''
 
+    def write(self, data):
+        try:
+            return self._endpoint.write(data)
+        except usb.core.USBError:
+            raise
+
     def _detach_kernel_driver_if_attached(self):
         if self._is_kernel_driver_attached():
             self._detach_kernel_driver()
 
     def _is_kernel_driver_attached(self):
-        return self.raw_device.is_kernel_driver_active()
+        return self.raw_device.is_kernel_driver_active(self.INTERFACE)
 
     def _detach_kernel_driver(self):
         _logger.info('Detaching kernel driver from device %s', self.device_info())

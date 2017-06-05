@@ -1,3 +1,4 @@
 USB:
 	Proper info for USB devices in logs.
 	Handle errors in getting enpoint (to detect boken firmware).
+	Differentiate read error from timeout.

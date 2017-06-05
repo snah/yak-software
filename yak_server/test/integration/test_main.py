@@ -30,10 +30,10 @@ class TestMain(util.TestCase):
     def test_main_calls_correct_functons(self):
         __main__.main()
 
-        switch_device_call = call.core.find(idProduct=0x04d8, idVendor=0x5901)
+        switch_device_call = call.core.find(idProduct=0x04d8, idVendor=0x5900)
         AC_device_call = call.core.find(idProduct=0x04d8, idVendor=0x5901)
 
-        switch_device = self.mock_usb.core.find(idProduct=0x04d8, idVendor=0x5901)
+        switch_device = self.mock_usb.core.find(idProduct=0x04d8, idVendor=0x5900)
         AC_device = self.mock_usb.core.find(idProduct=0x04d8, idVendor=0x5901)
 
         switch_conf = switch_device.get_active_configuration()

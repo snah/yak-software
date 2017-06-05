@@ -2,41 +2,24 @@
 
 import usb
 
+from yak_server import usbdevice
+
 def server_running():
     return True
 
 def main():
-    switch_device = usb.core.find(idVendor=0x04d8, idProduct=0x5900)
-    try:
-        switch_device.detach_kernel_driver(0)
-    except usb.USBError:
-        pass # No kernel driver was attached
-    usb.util.claim_interface(switch_device, 0)
+    switch_device = usbdevice.find(vendor_id=0x04d8, product_id=0x5900)[0]
+    switch_device.connect()
 
-    switch_conf = switch_device.get_active_configuration()
-    switch_interface = switch_conf.interfaces()[0]
-    switch_endpoint = switch_interface.endpoints()[0]
-
-    AC_device = usb.core.find(idVendor=0x04d8, idProduct=0x5901)
-    try:
-        AC_device.detach_kernel_driver(0)
-    except usb.USBError:
-        pass # No kernel driver was attached
-    usb.util.claim_interface(AC_device, 0)
-
-    AC_conf = AC_device.get_active_configuration()
-    AC_interface = AC_conf.interfaces()[0]
-    AC_endpoint = AC_interface.endpoints()[0]
+    AC_device = usbdevice.find(vendor_id=0x04d8, product_id=0x5901)[0]
+    AC_device.connect()
 
     while server_running():
-        try:
-            data = switch_endpoint.read(1)
-        except usb.USBError:
-            continue    # No data received.
+        data = switch_device.read(1)
 
-        print(data)
-
-        AC_endpoint.write(data)
+        if data:
+            print(data)
+            AC_device.write(data)
 
 if __name__ == '__main__':
     main()
