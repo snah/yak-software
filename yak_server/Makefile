@@ -45,4 +45,11 @@ lint: fix-whitespace
 
 fix-whitespace: $(addsuffix .fixed_whitespace, $(PYTHON_FILES))
 
+venv:
+	rm -rf venv
+	virtualenv venv
+	venv/bin/pip install nose2 cov-core pyusb
+	@echo -e "\033[33mDon't forget to manually activate the virtual environment:\033[0m"
+	@echo "source venv/bin/activate"
+
 FORCE:
