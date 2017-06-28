@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import copy
+import threading
 import unittest
 import unittest.mock
 
@@ -36,6 +37,16 @@ class TestSingleSwitchSingleLamp(util.TestCase):
             yield False
         return generator().__next__
 
+    def start_server(self):
+        self.thread = threading.Thread(target=self.run_server)
+        self.thread.start()
+
+    def run_server(self):
+        yak_server.__main__.main()
+    
+    def wait_for_server_shutdown(self):
+        self.thread.join()
+
     def assert_writes_correct_data(self, data):
         self.assertEqual(data, next(self.expected_data_iterator))
 
@@ -49,6 +60,8 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         self.mock_switch_device.read.side_effect = self.input_data_iterator
         self.mock_AC_device.write.side_effect = self.assert_writes_correct_data
 
-        yak_server.__main__.main()
+        self.start_server()
+
+        self.wait_for_server_shutdown()
     
         self.assert_all_data_was_read()
