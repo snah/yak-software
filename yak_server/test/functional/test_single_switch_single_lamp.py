@@ -4,6 +4,7 @@ import copy
 import threading
 import unittest
 import unittest.mock
+import queue
 
 from test import util
 
@@ -24,6 +25,26 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         self.start_patch('yak_server.__main__.server_running', new=self.run_for_iterations(self.ITERATIONS))
         self.mock_switch_device = unittest.mock.Mock()
         self.mock_AC_device = unittest.mock.Mock()
+
+        self.input_queue = queue.Queue()
+        self.output_queue = queue.Queue()
+
+        self.mock_switch_device.read.side_effect = self.input_data_from_queue
+        self.mock_AC_device.write.side_effect = self.queue_output_data
+
+    def test_single_switch_single_lamp(self):
+        self.start_server()
+
+        self.input_queue.put('on')
+        self.assert_lamp_is_on()
+
+        self.input_queue.put('off')
+        self.assert_lamp_is_off()
+
+        self.input_queue.put('on')
+        self.assert_lamp_is_on()
+
+        self.wait_for_server_shutdown()
 
     def map_mock_device(self, **kwargs):
         device_map = {(0x04d8, 0x5900): (self.mock_switch_device, ),
@@ -47,21 +68,19 @@ class TestSingleSwitchSingleLamp(util.TestCase):
     def wait_for_server_shutdown(self):
         self.thread.join()
 
-    def assert_writes_correct_data(self, data):
-        self.assertEqual(data, next(self.expected_data_iterator))
+    def input_data_from_queue(self, number_of_bytes):
+        return self.input_queue.get()
+
+    def queue_output_data(self, data):
+        self.output_queue.put(data)
 
     def assert_all_data_was_read(self):
-        with self.assertRaises(StopIteration):
-            next(self.input_data_iterator)
+        self.assertTrue(self.input_queue.empty())
 
-    def test_single_switch_single_lamp(self):
-        self.input_data_iterator = iter(['on', 'off', 'on'])
-        self.expected_data_iterator = iter(['on', 'off', 'on'])
-        self.mock_switch_device.read.side_effect = self.input_data_iterator
-        self.mock_AC_device.write.side_effect = self.assert_writes_correct_data
+    def assert_lamp_is_on(self):
+        self.assertEqual(self.output_queue.get(), 'on')
+        self.assert_all_data_was_read()
 
-        self.start_server()
-
-        self.wait_for_server_shutdown()
-    
+    def assert_lamp_is_off(self):
+        self.assertEqual(self.output_queue.get(), 'off')
         self.assert_all_data_was_read()
