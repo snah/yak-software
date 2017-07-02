@@ -22,7 +22,7 @@ class TestSingleSwitchSingleLamp(util.TestCase):
     
     def setUp(self):
         self.start_patch('yak_server.__main__.usbdevice.find', side_effect=self.map_mock_device)
-        self.start_patch('yak_server.__main__.server_running', new=self.run_for_iterations(self.ITERATIONS))
+        self.start_patch('yak_server.__main__.Application.server_running', new=self.run_for_iterations(self.ITERATIONS))
         self.mock_switch_device = unittest.mock.Mock()
         self.mock_AC_device = unittest.mock.Mock()
 
