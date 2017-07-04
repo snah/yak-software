@@ -31,14 +31,13 @@ class Application:
     def get_event(self):
         """Get the next event.
         
-        
         If there is no event to be processed, block untill one becomes
         available.
         """
         return self.switch_device.read(1)
 
     def handle_event(self, event):
-        """Handle and event."""
+        """Handle an event."""
         if event:
             self.AC_device.write(event)
 
