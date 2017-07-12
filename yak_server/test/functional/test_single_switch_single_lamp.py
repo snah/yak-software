@@ -10,6 +10,7 @@ from test import util
 
 import yak_server.__main__
 
+MAX_WAIT_TIME = 2
 
 class TestSingleSwitchSingleLamp(util.TestCase):
     """Test using a single switch to turn on and off a single lamp.
@@ -66,7 +67,7 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         yak_server.__main__.main()
     
     def wait_for_server_shutdown(self):
-        self.thread.join()
+        self.thread.join(2)
 
     def input_data_from_queue(self, number_of_bytes):
         return self.input_queue.get()
@@ -78,9 +79,9 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         self.assertTrue(self.input_queue.empty())
 
     def assert_lamp_is_on(self):
-        self.assertEqual(self.output_queue.get(), 'on')
+        self.assertEqual(self.output_queue.get(timeout=MAX_WAIT_TIME), 'on')
         self.assert_all_data_was_read()
 
     def assert_lamp_is_off(self):
-        self.assertEqual(self.output_queue.get(), 'off')
+        self.assertEqual(self.output_queue.get(timeout=MAX_WAIT_TIME), 'off')
         self.assert_all_data_was_read()
