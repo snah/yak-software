@@ -3,16 +3,19 @@
 import usb
 
 from yak_server import usbdevice
+from yak_server import interface
 
 class Application:
     """Object holding the main application state and main loop."""
     def setup(self):
         """Setup the application in preparation for the main loop."""
-        self.switch_device = usbdevice.find(vendor_id=0x04d8, product_id=0x5900)[0]
-        self.switch_device.connect()
+        switch_device = usbdevice.find(vendor_id=0x04d8, product_id=0x5900)[0]
+        self.switch_interface = interface.USBInterface(switch_device)
+        self.switch_interface.initialize()
 
-        self.AC_device = usbdevice.find(vendor_id=0x04d8, product_id=0x5901)[0]
-        self.AC_device.connect()
+        AC_device = usbdevice.find(vendor_id=0x04d8, product_id=0x5901)[0]
+        self.AC_interface = interface.USBInterface(AC_device)
+        self.AC_interface.initialize()
 
     def main_loop(self):
         """Run the program untill the server stops."""
@@ -34,12 +37,12 @@ class Application:
         If there is no event to be processed, block untill one becomes
         available.
         """
-        return self.switch_device.read(1)
+        return self.switch_interface.get_event2()
 
     def handle_event(self, event):
         """Handle an event."""
         if event:
-            self.AC_device.write(event)
+            self.AC_interface.send_command2(event)
 
 
 def main():
