@@ -1,3 +1,4 @@
+from yak_server import usbdevice
 
 class USBInterface:
     """An interface that is connected to a USB device."""
@@ -28,3 +29,15 @@ class USBInterface:
         function will be removed.
         """
         self._usb_device.write(command)
+
+
+class InterfaceManager():
+    def input_interfaces(self):
+        """Return an iterable of all input devices."""
+        devices = usbdevice.find(vendor_id=0x04d8, product_id=0x5900)
+        return [USBInterface(device) for device in devices]
+
+    def output_interfaces(self):
+        """Return an iterable of all output devices."""
+        devices = usbdevice.find(vendor_id=0x04d8, product_id=0x5901)
+        return [USBInterface(device) for device in devices]

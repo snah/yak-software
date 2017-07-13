@@ -9,12 +9,11 @@ class Application:
     """Object holding the main application state and main loop."""
     def setup(self):
         """Setup the application in preparation for the main loop."""
-        switch_device = usbdevice.find(vendor_id=0x04d8, product_id=0x5900)[0]
-        self.switch_interface = interface.USBInterface(switch_device)
+        interface_manager = interface.InterfaceManager()
+        self.switch_interface = interface_manager.input_interfaces()[0]
         self.switch_interface.initialize()
 
-        AC_device = usbdevice.find(vendor_id=0x04d8, product_id=0x5901)[0]
-        self.AC_interface = interface.USBInterface(AC_device)
+        self.AC_interface = interface_manager.output_interfaces()[0]
         self.AC_interface.initialize()
 
     def main_loop(self):
