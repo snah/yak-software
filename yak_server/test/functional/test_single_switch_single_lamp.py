@@ -33,16 +33,18 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         self.mock_switch_device.read.side_effect = self.input_data_from_queue
         self.mock_AC_device.write.side_effect = self.queue_output_data
 
+        self.button_state = [False] * 8
+
     def test_single_switch_single_lamp(self):
         self.start_server()
 
-        self.input_queue.put('on')
+        self.press_button(0)
         self.assert_lamp_is_on()
 
-        self.input_queue.put('off')
+        self.press_button(0)
         self.assert_lamp_is_off()
 
-        self.input_queue.put('on')
+        self.press_button(0)
         self.assert_lamp_is_on()
 
         self.wait_for_server_shutdown()
@@ -79,9 +81,18 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         self.assertTrue(self.input_queue.empty())
 
     def assert_lamp_is_on(self):
-        self.assertEqual(self.output_queue.get(timeout=MAX_WAIT_TIME), 'on')
+        self.assertEqual(self.output_queue.get(timeout=MAX_WAIT_TIME), b'\x01')
         self.assert_all_data_was_read()
 
     def assert_lamp_is_off(self):
-        self.assertEqual(self.output_queue.get(timeout=MAX_WAIT_TIME), 'off')
+        self.assertEqual(self.output_queue.get(timeout=MAX_WAIT_TIME), b'\x00')
         self.assert_all_data_was_read()
+
+    def press_button(self, button_number):
+        # Only one button is used currently, so button_number is ignored.
+        if self.button_state[0]:
+            self.input_queue.put(b'\x00')
+            self.button_state[0] = False
+        else:
+            self.input_queue.put(b'\x01')
+            self.button_state[0] = True
