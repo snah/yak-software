@@ -28,7 +28,7 @@ unittest: FORCE
 	nose2 $(NOSE_OPTIONS) test.unit
 
 coverage: FORCE
-	nose2 $(NOSE_OPTIONS) test.unit -C  --coverage yak_server/__init__.py --coverage-report html
+	nose2 $(NOSE_OPTIONS) test.unit -C  --coverage yak_server --coverage-report html
 	@sed -n 's/.*<span class="pc_cov">\(100%\)<\/span>.*/\nCoverage: \1\n/ p' htmlcov/index.html
 
 pypytest: clean FORCE
@@ -48,7 +48,7 @@ fix-whitespace: $(addsuffix .fixed_whitespace, $(PYTHON_FILES))
 venv:
 	rm -rf venv
 	virtualenv venv
-	venv/bin/pip install nose2 cov-core pyusb
+	venv/bin/pip install nose2 cov-core pyusb pylama pylama-pylint
 	@echo -e "\033[33mDon't forget to manually activate the virtual environment:\033[0m"
 	@echo "source venv/bin/activate"
 

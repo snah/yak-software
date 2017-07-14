@@ -1,10 +1,16 @@
+"""Defines abstractions for USB devices."""
+
+
 import logging
 import usb
 
-_logger = logging.getLogger(__name__)
+
+_LOGGER = logging.getLogger(__name__)
+
 
 class USBError(Exception):
     """General USB exception."""
+
 
 def _translate_search_parameters(search_parameters):
     """Translate search parameters into kwargs for pyusb."""
@@ -24,13 +30,13 @@ def _translate_search_parameters(search_parameters):
 
 def find(**search_parameters):
     """Return an iterable of USBDevices matching the search parameters.
-    
+
     The search parameters are given as keyword arguments with
     string value. Currently supported search parameters are
     product_id, vendor_id and device_release_number, all of which
     expect an integer value.
     """
-    _logger.info('Scanning for usb devices with %s', search_parameters)
+    _LOGGER.info('Scanning for usb devices with %s', search_parameters)
 
     find_kwargs = _translate_search_parameters(search_parameters)
     raw_devices = usb.core.find(**find_kwargs, find_all=True)
@@ -38,22 +44,24 @@ def find(**search_parameters):
     devices = tuple(USBDevice(raw_device) for raw_device in raw_devices)
 
     for device in devices:
-        _logger.info('Found usb device: %s', device.device_info())
+        _LOGGER.info('Found usb device: %s', device.device_info())
 
     return devices
-    
+
 
 class USBDevice:
     """Provide an interface to a connected USB device."""
+
     INTERFACE = 0
     ENDPOINT = 0
 
     def __init__(self, raw_device):
+        """Initialize the device given a pyusb device."""
         self.raw_device = raw_device
 
     def connect(self):
         """Connect to the usb device.
-        
+
         Detach the kernel driver if it is attached and then claim
         the interface. This must be done before calling any of the other
         methods of this class. Changes to the INTERFACE and ENDPOINT
@@ -75,9 +83,10 @@ class USBDevice:
 
     def read(self, number_of_bytes):
         """Read a number of bytes from the device.
-        
+
         If there is no data to be read an empty bytes object is
-        returned."""
+        returned.
+        """
         try:
             return self._endpoint.read(number_of_bytes)
         except usb.core.USBError:
@@ -85,19 +94,19 @@ class USBDevice:
 
     def write(self, data):
         """Write the given bytes to the device.
-        
+
         Return the number of bytes written.
         """
         try:
             return self._endpoint.write(data)
-        except usb.core.USBError as e:
-            self._handle_write_exception(e)
+        except usb.core.USBError as exception:
+            self._handle_write_exception(exception)
 
-    def _handle_write_exception(self, e):
+    def _handle_write_exception(self, exception):
         msg = 'Error when writing to interface {} of device {}: {}'.format(
-                  self.INTERFACE, self.device_info(), str(e))
-        _logger.error(msg)
-        raise USBError(msg) from e
+            self.INTERFACE, self.device_info(), str(exception))
+        _LOGGER.error(msg)
+        raise USBError(msg) from exception
 
     def _detach_kernel_driver_if_attached(self):
         if self._is_kernel_driver_attached():
@@ -107,30 +116,33 @@ class USBDevice:
         return self.raw_device.is_kernel_driver_active(self.INTERFACE)
 
     def _detach_kernel_driver(self):
-        _logger.info('Detaching kernel driver from device %s', self.device_info())
+        _LOGGER.info('Detaching kernel driver from device %s',
+                     self.device_info())
         try:
             self.raw_device.detach_kernel_driver(self.INTERFACE)
-        except usb.core.USBError as e:
-            self._handle_detach_kernel_driver_exception(e)
+        except usb.core.USBError as exception:
+            self._handle_detach_kernel_driver_exception(exception)
 
-    def _handle_detach_kernel_driver_exception(self, e):
-        msg = 'Error detaching kernel driver for interface {} of device {}:\n{}'.format(
-                      self.INTERFACE, self.raw_device, str(e))
-        _logger.error(msg)
-        raise USBError(msg) from e
+    def _handle_detach_kernel_driver_exception(self, exception):
+        msg = ('Error detaching kernel driver for interface {} of ' +
+               'device {}:\n{}').format(self.INTERFACE, self.raw_device,
+                                        str(exception))
+        _LOGGER.error(msg)
+        raise USBError(msg) from exception
 
     def _claim_interface(self):
-        _logger.info('Claiming interface %d for device %s', self.INTERFACE, self.device_info())
+        _LOGGER.info('Claiming interface %d for device %s',
+                     self.INTERFACE, self.device_info())
         try:
             usb.util.claim_interface(self.raw_device, self.INTERFACE)
-        except usb.core.USBError as e:
-            self._handle_claim_interface_exception(e)
+        except usb.core.USBError as exception:
+            self._handle_claim_interface_exception(exception)
 
-    def _handle_claim_interface_exception(self, e):
+    def _handle_claim_interface_exception(self, exception):
         msg = 'Error claiming interface {} of device {}:\n{}'.format(
-                      self.INTERFACE, self.device_info(), str(e))
-        _logger.error(msg)
-        raise USBError(msg) from e
+            self.INTERFACE, self.device_info(), str(exception))
+        _LOGGER.error(msg)
+        raise USBError(msg) from exception
 
     def _get_endpoint(self):
         active_configuration = self.raw_device.get_active_configuration()

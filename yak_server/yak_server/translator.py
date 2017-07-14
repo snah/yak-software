@@ -1,10 +1,12 @@
+"""Defines translators for various interfaces."""
 
 
 class SwitchInterfaceTranslator:
     """Translate USB messages from the switch interface to event."""
+
     def raw_data_to_event(self, raw_data):
         """Translate raw data to the corresponding event.
-        
+
         The input is expected to be a bytes object.
         """
         self._check_raw_data_type(raw_data)
@@ -22,12 +24,15 @@ class SwitchInterfaceTranslator:
             return b'\x01'
         self._handle_unknown_event(self)
 
-    def _check_raw_data_type(self, raw_data):
+    @staticmethod
+    def _check_raw_data_type(raw_data):
         if not isinstance(raw_data, bytes):
             raise TypeError("'raw_data' should be a bytes object.")
 
-    def _handle_unknown_message(self, raw_data):
+    @staticmethod
+    def _handle_unknown_message(raw_data):
         raise ValueError('Unknown message code {}'.format(raw_data))
 
-    def _handle_unknown_event(self, event):
+    @staticmethod
+    def _handle_unknown_event(event):
         raise ValueError("Unknown event type: '{}'".format(event))
