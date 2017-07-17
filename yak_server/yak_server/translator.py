@@ -25,6 +25,11 @@ class SwitchInterfaceTranslator:
         self._handle_unknown_event(self)
 
     @staticmethod
+    def maximum_data_length():
+        """Return the maximum data length expected from the device."""
+        return 1
+
+    @staticmethod
     def _check_raw_data_type(raw_data):
         if not isinstance(raw_data, bytes):
             raise TypeError("'raw_data' should be a bytes object.")

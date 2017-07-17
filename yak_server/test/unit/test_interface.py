@@ -24,6 +24,7 @@ class TestUSBInterface(util.TestCase):
         stub_usbdevice.read.side_effect = lambda n: b'abc'[:n]
         stub_translator = unittest.mock.Mock()
         stub_translator.raw_data_to_event.side_effect = lambda x: x + b'_event'
+        stub_translator.maximum_data_length.return_value = 1
         interface = yak_server.interface.USBInterface(stub_usbdevice)
         interface.translator = stub_translator
 

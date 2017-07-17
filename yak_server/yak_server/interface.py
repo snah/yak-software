@@ -29,7 +29,8 @@ class USBInterface:
         self._write_data_to_device(data)
 
     def _read_data_from_device(self):
-        return self._usb_device.read(1)
+        maximum_data_length = self.translator.maximum_data_length()
+        return self._usb_device.read(maximum_data_length)
 
     def _write_data_to_device(self, data):
         self._usb_device.write(data)

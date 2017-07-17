@@ -49,3 +49,8 @@ class TestSwitchInterfaceTranslator(util.TestCase):
     @unittest.skip
     def test_event_to_raw_data_raises_type_error_if_not_given_and_event(self):
         self.fail('TODO')
+
+    def test_correct_maximum_data_length(self):
+        maximum_data_length = self.translator.maximum_data_length()
+
+        self.assertEqual(maximum_data_length, 1)
