@@ -11,6 +11,7 @@ from test import util
 
 import yak_server.__main__
 import yak_server.usbdevice
+import yak_server.translator
 
 
 MAX_WAIT_TIME = 2
@@ -81,11 +82,17 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         self.assertTrue(self.input_queue.empty())
 
     def assert_lamp_is_on(self):
-        self.assertEqual(self.output_queue.get(timeout=MAX_WAIT_TIME), b'\x01')
+        data = self.output_queue.get(timeout=MAX_WAIT_TIME)
+        switch_translator = yak_server.translator.SwitchInterfaceTranslator()
+        event = switch_translator.raw_data_to_event(data)
+        self.assertEqual(event, 'on')
         self.assert_all_data_was_read()
 
     def assert_lamp_is_off(self):
-        self.assertEqual(self.output_queue.get(timeout=MAX_WAIT_TIME), b'\x00')
+        data = self.output_queue.get(timeout=MAX_WAIT_TIME)
+        ac_translator = yak_server.translator.SwitchInterfaceTranslator()
+        event = ac_translator.raw_data_to_event(data)
+        self.assertEqual(event, 'off')
         self.assert_all_data_was_read()
 
     def press_button(self, button_number):
