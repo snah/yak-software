@@ -38,12 +38,12 @@ class Application:
         If there is no event to be processed, block untill one becomes
         available.
         """
-        return self.switch_interface.get_event2()
+        return self.switch_interface.get_event()
 
     def handle_event(self, event):
         """Handle an event."""
         if event:
-            self.ac_interface.send_command2(event)
+            self.ac_interface.send_command(event)
 
 
 def main():

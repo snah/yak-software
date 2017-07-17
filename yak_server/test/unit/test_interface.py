@@ -22,17 +22,23 @@ class TestUSBInterface(util.TestCase):
     def test_receives_event(self):
         stub_usbdevice = unittest.mock.Mock()
         stub_usbdevice.read.side_effect = lambda n: b'abc'[:n]
+        stub_translator = unittest.mock.Mock()
+        stub_translator.raw_data_to_event.side_effect = lambda x: x + b'_event'
         interface = yak_server.interface.USBInterface(stub_usbdevice)
+        interface.translator = stub_translator
 
-        event = interface.get_event2()
+        event = interface.get_event()
 
-        self.assertEqual(event, b'a')
+        self.assertEqual(event, b'a_event')
 
     def test_send_command(self):
         mock_usbdevice = unittest.mock.Mock()
+        stub_translator = unittest.mock.Mock()
+        stub_translator.event_to_raw_data.side_effect = lambda x: x[:1]
         interface = yak_server.interface.USBInterface(mock_usbdevice)
+        interface.translator = stub_translator
 
-        interface.send_command2(b'a')
+        interface.send_command(b'a_event')
 
         mock_usbdevice.write.assert_called_once_with(b'a')
 

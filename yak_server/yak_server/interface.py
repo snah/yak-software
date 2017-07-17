@@ -1,10 +1,13 @@
 """Devices various interfaces that are connected to the server."""
 
 from yak_server import usbdevice
+from yak_server import translator
 
 
 class USBInterface:
     """An interface that is connected to a USB device."""
+
+    translator = translator.SwitchInterfaceTranslator()
 
     def __init__(self, usb_device):
         """Create an interface from the given USB device."""
@@ -14,26 +17,22 @@ class USBInterface:
         """Initialize the interface so it is ready to use."""
         self._usb_device.connect()
 
-    def get_event2(self):
-        """Return the next event from the interface.
+    def get_event(self):
+        """Return the next event from the interface."""
+        data = self._read_data_from_device()
+        event = self.translator.raw_data_to_event(data)
+        return event
 
-        If there is no event to be processed, block untill one becomes
-        available.
+    def send_command(self, command):
+        """Send a command to the interface."""
+        data = self.translator.event_to_raw_data(command)
+        self._write_data_to_device(data)
 
-        This is a temporary function that returns the raw data instead
-        of a proper event. Once events are implemented this function
-        will be removed.
-        """
+    def _read_data_from_device(self):
         return self._usb_device.read(1)
 
-    def send_command2(self, command):
-        """Send a command to the interface.
-
-        This is a temporary function that expects the raw data instead
-        of a proper command. Once commands are implemented this
-        function will be removed.
-        """
-        self._usb_device.write(command)
+    def _write_data_to_device(self, data):
+        self._usb_device.write(data)
 
 
 class InterfaceManager():
