@@ -98,9 +98,21 @@ class USBDevice:
         Return the number of bytes written.
         """
         try:
-            return self._endpoint.write(data)
+            bytes_written = self._endpoint.write(data)
+            if bytes_written != len(data):
+                self._handle_incomplete_write(bytes_written, data)
+            return bytes_written
         except usb.core.USBError as exception:
             self._handle_write_exception(exception)
+
+    def _handle_incomplete_write(self, bytes_written, data):
+        msg = 'Not all data written to interface {} of device {}.'.format(
+            self.INTERFACE, self.device_info())
+        msg2 = 'Tried to write {} bytes ({}), but only wrote {}.'.format(
+            len(data), data, bytes_written)
+        _LOGGER.error(msg)
+        _LOGGER.error(msg2)
+        raise USBError(msg)
 
     def _handle_write_exception(self, exception):
         msg = 'Error when writing to interface {} of device {}: {}'.format(
@@ -150,4 +162,5 @@ class USBDevice:
         return interface.endpoints()[self.ENDPOINT]
 
     def device_info(self):
+        """Return a string containing device information."""
         return repr(self.raw_device)

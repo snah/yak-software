@@ -224,17 +224,25 @@ class TestUSBDevice(test.util.TestCase):
 
     def test_write(self):
         usb_device = self._make_usb_device()
+        self.usb_device_mocks.endpoint.write.return_value = 4
         usb_device.connect()
 
         number_of_bytes_written = usb_device.write(b'test')
 
         self.usb_device_mocks.endpoint.write.assert_called_with(b'test')
-        self.assertEqual(number_of_bytes_written,
-                         self.usb_device_mocks.endpoint.write())
+        self.assertEqual(number_of_bytes_written, 4)
 
     def test_write_raises_exception_on_error(self):
         usb_device = self._make_usb_device()
         self.usb_device_mocks.endpoint.write.side_effect = usb.USBError('')
+        usb_device.connect()
+
+        with self.assertRaises(yak_server.usbdevice.USBError):
+            usb_device.write(b'test')
+
+    def test_write_raises_exception_on_incomplete_write(self):
+        usb_device = self._make_usb_device()
+        self.usb_device_mocks.endpoint.write.return_value = 2
         usb_device.connect()
 
         with self.assertRaises(yak_server.usbdevice.USBError):
