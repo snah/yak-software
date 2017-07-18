@@ -19,7 +19,7 @@ docs: FORCE
 	sphinx-build -b html docs/ docs/_build/
 
 travis_test: FORCE
-	nose2 $(NOSE_OPTIONS) -C --coverage yak_server/__init__.py test
+	nose2 $(NOSE_OPTIONS) -C --coverage yak_server test
 
 test: FORCE
 	nose2 $(NOSE_OPTIONS) test
@@ -48,7 +48,7 @@ fix-whitespace: $(addsuffix .fixed_whitespace, $(PYTHON_FILES))
 venv:
 	rm -rf venv
 	virtualenv venv
-	venv/bin/pip install nose2 cov-core pyusb pylama pylama-pylint
+	venv/bin/pip install nose2 cov-core pyusb pylama pylama-pylint ezvalue
 	@echo -e "\033[33mDon't forget to manually activate the virtual environment:\033[0m"
 	@echo "source venv/bin/activate"
 
