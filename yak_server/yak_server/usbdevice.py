@@ -9,7 +9,11 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class USBError(Exception):
-    """General USB exception."""
+    """Generic USB exception."""
+
+
+class IncompleteUSBWrite(USBError):
+    """Not all data could be written to the USB device."""
 
 
 def _translate_search_parameters(search_parameters):
@@ -85,7 +89,9 @@ class USBDevice:
         """Read a number of bytes from the device.
 
         If there is no data to be read an empty bytes object is
-        returned.
+        returned. The 'number_of_bytes' arguments gives the maximum
+        number of bytes read, if a shorter packet is received then
+        the length of the data returned is the length of that packet.
         """
         try:
             return self._endpoint.read(number_of_bytes)
@@ -95,7 +101,8 @@ class USBDevice:
     def write(self, data):
         """Write the given bytes to the device.
 
-        Return the number of bytes written.
+        Return the number of bytes written. An exception is raised if
+        not all data could be written.
         """
         try:
             bytes_written = self._endpoint.write(data)
@@ -112,7 +119,7 @@ class USBDevice:
             len(data), data, bytes_written)
         _LOGGER.error(msg)
         _LOGGER.error(msg2)
-        raise USBError(msg)
+        raise IncompleteUSBWrite(msg)
 
     def _handle_write_exception(self, exception):
         msg = 'Error when writing to interface {} of device {}: {}'.format(

@@ -245,7 +245,7 @@ class TestUSBDevice(test.util.TestCase):
         self.usb_device_mocks.endpoint.write.return_value = 2
         usb_device.connect()
 
-        with self.assertRaises(yak_server.usbdevice.USBError):
+        with self.assertRaises(yak_server.usbdevice.IncompleteUSBWrite):
             usb_device.write(b'test')
 
     def test_write_logs_error(self):
