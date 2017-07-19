@@ -9,6 +9,13 @@ class TestCase(unittest.TestCase):
         self.addCleanup(patch.stop)
         return patch
 
+    def assert_event_equal(self, first, second):
+        """Assert that two events are equal for all except timestamp."""
+        EventClass = type(second)
+        event_timestamp = first.timestamp
+        time_corrected_event = EventClass(second, timestamp=event_timestamp)
+        self.assertEqual(first, time_corrected_event)
+
 
 def return_first(first, *args, **kwars):
     """Return the first of a functions arguments."""

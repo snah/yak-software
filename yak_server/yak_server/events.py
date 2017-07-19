@@ -1,6 +1,9 @@
+"""Define the event classes."""
+
 import datetime
 
 import ezvalue
+
 
 class Event(ezvalue.Value):
     """Baseclass for all events."""
@@ -26,3 +29,7 @@ class ButtonDownEvent(Event):
 
 class ButtonUpEvent(Event):
     """Emitted when a button or lightswitch was released."""
+
+
+LampOnEvent = ButtonDownEvent
+LampOffEvent = ButtonUpEvent

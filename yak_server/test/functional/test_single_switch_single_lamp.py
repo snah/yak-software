@@ -82,17 +82,16 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         self.assertTrue(self.input_queue.empty())
 
     def assert_lamp_is_on(self):
-        data = self.output_queue.get(timeout=MAX_WAIT_TIME)
-        switch_translator = yak_server.translator.SwitchInterfaceTranslator()
-        event = switch_translator.raw_data_to_event(data)
-        self.assertEqual(event, 'on')
-        self.assert_all_data_was_read()
+        self.assert_last_event(yak_server.events.LampOnEvent())
 
     def assert_lamp_is_off(self):
+        self.assert_last_event(yak_server.events.LampOffEvent())
+
+    def assert_last_event(self, event):
         data = self.output_queue.get(timeout=MAX_WAIT_TIME)
         ac_translator = yak_server.translator.SwitchInterfaceTranslator()
-        event = ac_translator.raw_data_to_event(data)
-        self.assertEqual(event, 'off')
+        received_event = ac_translator.raw_data_to_event(data)
+        self.assert_event_equal(received_event, event)
         self.assert_all_data_was_read()
 
     def press_button(self, button_number):

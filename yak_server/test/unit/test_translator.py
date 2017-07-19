@@ -8,21 +8,22 @@ import unittest.mock
 from test import util
 
 import yak_server.translator
+import yak_server.events
 
 
 class TestSwitchInterfaceTranslator(util.TestCase):
     def setUp(self):
         self.translator = yak_server.translator.SwitchInterfaceTranslator()
 
-    def test_translates_lamp_on_message_to_event(self):
+    def test_translates_button_down_message_to_event(self):
         event = self.translator.raw_data_to_event(b'\x01')
 
-        self.assertEqual(event, 'on')
+        self.assert_event_equal(event, yak_server.events.ButtonDownEvent())
 
-    def test_translates_lamp_off_message_to_event(self):
+    def test_translates_button_up_message_to_event(self):
         event = self.translator.raw_data_to_event(b'\x00')
 
-        self.assertEqual(event, 'off')
+        self.assert_event_equal(event, yak_server.events.ButtonUpEvent())
 
     def test_raw_to_event_raises_value_error_on_unknown_input(self):
         with self.assertRaises(ValueError):
@@ -32,13 +33,15 @@ class TestSwitchInterfaceTranslator(util.TestCase):
         with self.assertRaises(TypeError):
             self.translator.raw_data_to_event(True)
 
-    def test_translates_lamp_on_event_to_raw_data(self):
-        raw_data = self.translator.event_to_raw_data('on')
+    def test_translates_button_down_event_to_raw_data(self):
+        event = yak_server.events.ButtonDownEvent()
+        raw_data = self.translator.event_to_raw_data(event)
 
         self.assertEqual(raw_data, b'\x01')
 
-    def test_translates_lamp_off_event_to_raw_data(self):
-        raw_data = self.translator.event_to_raw_data('off')
+    def test_translates_button_up_event_to_raw_data(self):
+        event = yak_server.events.ButtonUpEvent()
+        raw_data = self.translator.event_to_raw_data(event)
 
         self.assertEqual(raw_data, b'\x00')
 

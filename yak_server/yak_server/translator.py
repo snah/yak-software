@@ -1,5 +1,7 @@
 """Defines translators for various interfaces."""
 
+from yak_server import events
+
 
 class SwitchInterfaceTranslator:
     """Translate USB messages from the switch interface to event."""
@@ -11,16 +13,16 @@ class SwitchInterfaceTranslator:
         """
         self._check_raw_data_type(raw_data)
         if raw_data == b'\x00':
-            return 'off'
+            return events.ButtonUpEvent()
         elif raw_data == b'\x01':
-            return 'on'
+            return events.ButtonDownEvent()
         self._handle_unknown_message(raw_data)
 
     def event_to_raw_data(self, event):
         """Translate and event to raw data."""
-        if event == 'off':
+        if isinstance(event, events.ButtonUpEvent):
             return b'\x00'
-        elif event == 'on':
+        elif isinstance(event, events.ButtonDownEvent):
             return b'\x01'
         self._handle_unknown_event(self)
 
