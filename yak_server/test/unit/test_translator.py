@@ -47,7 +47,7 @@ class TestSwitchInterfaceTranslator(util.TestCase):
 
     def test_event_to_raw_data_raises_value_error_on_unknown_event_type(self):
         with self.assertRaises(ValueError):
-            self.translator.event_to_raw_data('unknown')
+            self.translator.event_to_raw_data(yak_server.events.Event())
 
     @unittest.skip
     def test_event_to_raw_data_raises_type_error_if_not_given_and_event(self):
