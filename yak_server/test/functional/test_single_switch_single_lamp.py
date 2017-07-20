@@ -11,7 +11,7 @@ from test import util
 
 import yak_server.__main__
 import yak_server.usbdevice
-import yak_server.translator
+import yak_server.translators
 
 
 MAX_WAIT_TIME = 2
@@ -89,7 +89,7 @@ class TestSingleSwitchSingleLamp(util.TestCase):
 
     def assert_last_event(self, event):
         data = self.output_queue.get(timeout=MAX_WAIT_TIME)
-        ac_translator = yak_server.translator.SwitchInterfaceTranslator()
+        ac_translator = yak_server.translators.SwitchInterfaceTranslator()
         received_event = ac_translator.raw_data_to_event(data)
         self.assert_event_equal(received_event, event)
         self.assert_all_data_was_read()

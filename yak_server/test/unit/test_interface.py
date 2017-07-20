@@ -13,7 +13,8 @@ import yak_server.interface
 class TestUSBInterface(util.TestCase):
     def test_initialize_connects_to_usb_device(self):
         mock_usbdevice = unittest.mock.Mock()
-        interface = yak_server.interface.USBInterface(mock_usbdevice)
+        interface = yak_server.interface.USBInterface(mock_usbdevice,
+                                                      translator=None)
 
         interface.initialize()
 
@@ -25,7 +26,8 @@ class TestUSBInterface(util.TestCase):
         stub_translator = unittest.mock.Mock()
         stub_translator.raw_data_to_event.side_effect = lambda x: x + b'_event'
         stub_translator.maximum_data_length.return_value = 1
-        interface = yak_server.interface.USBInterface(stub_usbdevice)
+        interface = yak_server.interface.USBInterface(stub_usbdevice,
+                                                      stub_translator)
         interface.translator = stub_translator
 
         event = interface.get_event()
@@ -36,7 +38,8 @@ class TestUSBInterface(util.TestCase):
         mock_usbdevice = unittest.mock.Mock()
         stub_translator = unittest.mock.Mock()
         stub_translator.event_to_raw_data.side_effect = lambda x: x[:1]
-        interface = yak_server.interface.USBInterface(mock_usbdevice)
+        interface = yak_server.interface.USBInterface(mock_usbdevice,
+                                                      stub_translator)
         interface.translator = stub_translator
 
         interface.send_command(b'a_event')

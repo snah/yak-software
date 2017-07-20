@@ -3,6 +3,7 @@
 """The yak_server application."""
 
 from yak_server import interface
+from yak_server import events
 
 
 class Application:
@@ -48,7 +49,10 @@ class Application:
     def handle_event(self, event):
         """Handle an event."""
         if event:
-            self.ac_interface.send_command(event)
+            if isinstance(event, events.ButtonDownEvent):
+                self.ac_interface.send_command(events.LampOnEvent())
+            elif isinstance(event, events.ButtonUpEvent):
+                self.ac_interface.send_command(events.LampOffEvent())
 
 
 def main():

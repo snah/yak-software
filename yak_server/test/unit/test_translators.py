@@ -7,23 +7,23 @@ import unittest.mock
 
 from test import util
 
-import yak_server.translator
+import yak_server.translators
 import yak_server.events
 
 
-class TestSwitchInterfaceTranslator(util.TestCase):
-    def setUp(self):
-        self.translator = yak_server.translator.SwitchInterfaceTranslator()
+class TestLookupTranslator(util.TestCase):
+    class ConcreteLookupTranslator(yak_server.translators.LookupTranslator):
+        translation_table = yak_server.translators.LookupTable({
+            b'a': yak_server.events.ButtonUpEvent,
+            b'b': yak_server.events.ButtonDownEvent})
 
-    def test_translates_button_down_message_to_event(self):
-        event = self.translator.raw_data_to_event(b'\x01')
+    def setUp(self):
+        self.translator = self.ConcreteLookupTranslator()
+
+    def test_translates_raw_data_to_event(self):
+        event = self.translator.raw_data_to_event(b'b')
 
         self.assert_event_equal(event, yak_server.events.ButtonDownEvent())
-
-    def test_translates_button_up_message_to_event(self):
-        event = self.translator.raw_data_to_event(b'\x00')
-
-        self.assert_event_equal(event, yak_server.events.ButtonUpEvent())
 
     def test_raw_to_event_raises_value_error_on_unknown_input(self):
         with self.assertRaises(ValueError):
@@ -33,17 +33,11 @@ class TestSwitchInterfaceTranslator(util.TestCase):
         with self.assertRaises(TypeError):
             self.translator.raw_data_to_event(True)
 
-    def test_translates_button_down_event_to_raw_data(self):
-        event = yak_server.events.ButtonDownEvent()
-        raw_data = self.translator.event_to_raw_data(event)
-
-        self.assertEqual(raw_data, b'\x01')
-
-    def test_translates_button_up_event_to_raw_data(self):
+    def test_translates_event_to_raw_data(self):
         event = yak_server.events.ButtonUpEvent()
         raw_data = self.translator.event_to_raw_data(event)
 
-        self.assertEqual(raw_data, b'\x00')
+        self.assertEqual(raw_data, b'a')
 
     def test_event_to_raw_data_raises_value_error_on_unknown_event_type(self):
         with self.assertRaises(ValueError):

@@ -1,17 +1,16 @@
 """Devices various interfaces that are connected to the server."""
 
 from yak_server import usbdevice
-from yak_server import translator
+from yak_server import translators
 
 
 class USBInterface:
     """An interface that is connected to a USB device."""
 
-    translator = translator.SwitchInterfaceTranslator()
-
-    def __init__(self, usb_device):
+    def __init__(self, usb_device, translator):
         """Create an interface from the given USB device."""
         self._usb_device = usb_device
+        self.translator = translator
 
     def initialize(self):
         """Initialize the interface so it is ready to use."""
@@ -43,10 +42,12 @@ class InterfaceManager():
     def input_interfaces():
         """Return an iterable of all input devices."""
         devices = usbdevice.find(vendor_id=0x04d8, product_id=0x5900)
-        return [USBInterface(device) for device in devices]
+        Translator = translators.SwitchInterfaceTranslator
+        return [USBInterface(device, Translator()) for device in devices]
 
     @staticmethod
     def output_interfaces():
         """Return an iterable of all output devices."""
         devices = usbdevice.find(vendor_id=0x04d8, product_id=0x5901)
-        return [USBInterface(device) for device in devices]
+        Translator = translators.SwitchInterfaceTranslator
+        return [USBInterface(device, Translator()) for device in devices]
