@@ -46,6 +46,11 @@ class Translator:
         raise ValueError('Unknown message code {}'.format(raw_data))
 
     @staticmethod
+    def _check_event_type(event):
+        if not isinstance(event, events.Event):
+            raise TypeError('expected and event, not {}.'.format(event))
+
+    @staticmethod
     def _handle_unknown_event(event):
         raise ValueError("Unknown event type: '{}'".format(event))
 
@@ -74,6 +79,7 @@ class LookupTranslator(Translator):
 
     def event_to_raw_data(self, event):
         """Translate and event to raw data."""
+        self._check_event_type(event)
         try:
             return self._lookup_raw_data(event)
         except KeyError:
@@ -97,3 +103,11 @@ class SwitchInterfaceTranslator(LookupTranslator):
     translation_table = LookupTable({
         b'\x00': events.ButtonUpEvent,
         b'\x01': events.ButtonDownEvent})
+
+
+class ACInterfaceTranslator(LookupTranslator):
+    """Translate USB messages from the switch interface to event."""
+
+    translation_table = LookupTable({
+        b'\x00': events.LampOffEvent,
+        b'\x01': events.LampOnEvent})

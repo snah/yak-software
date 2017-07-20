@@ -2,9 +2,6 @@
 
 # pylint: disable = no-self-use, unused-argument
 
-import unittest
-import unittest.mock
-
 from test import util
 
 import yak_server.translators
@@ -43,9 +40,9 @@ class TestLookupTranslator(util.TestCase):
         with self.assertRaises(ValueError):
             self.translator.event_to_raw_data(yak_server.events.Event())
 
-    @unittest.skip
-    def test_event_to_raw_data_raises_type_error_if_not_given_and_event(self):
-        self.fail('TODO')
+    def test_event_to_raw_data_raises_type_error_if_not_given_an_event(self):
+        with self.assertRaises(TypeError):
+            self.translator.event_to_raw_data('not an event')
 
     def test_correct_maximum_data_length(self):
         maximum_data_length = self.translator.maximum_data_length()

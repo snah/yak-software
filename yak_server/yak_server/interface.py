@@ -49,5 +49,5 @@ class InterfaceManager():
     def output_interfaces():
         """Return an iterable of all output devices."""
         devices = usbdevice.find(vendor_id=0x04d8, product_id=0x5901)
-        Translator = translators.SwitchInterfaceTranslator
+        Translator = translators.ACInterfaceTranslator
         return [USBInterface(device, Translator()) for device in devices]
