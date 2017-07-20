@@ -39,12 +39,14 @@ class USBInterface:
 class InterfaceManager():
     """Manages the various interfaces of the server."""
 
-    def input_interfaces(self):
+    @staticmethod
+    def input_interfaces():
         """Return an iterable of all input devices."""
         devices = usbdevice.find(vendor_id=0x04d8, product_id=0x5900)
         return [USBInterface(device) for device in devices]
 
-    def output_interfaces(self):
+    @staticmethod
+    def output_interfaces():
         """Return an iterable of all output devices."""
         devices = usbdevice.find(vendor_id=0x04d8, product_id=0x5901)
         return [USBInterface(device) for device in devices]

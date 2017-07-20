@@ -8,6 +8,11 @@ from yak_server import interface
 class Application:
     """Object holding the main application state and main loop."""
 
+    def __init__(self):
+        """Create the application object."""
+        self.switch_interface = None
+        self.ac_interface = None
+
     def setup(self):
         """Initialize the application in preparation for the main loop."""
         interface_manager = interface.InterfaceManager()

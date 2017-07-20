@@ -62,6 +62,7 @@ class USBDevice:
     def __init__(self, raw_device):
         """Initialize the device given a pyusb device."""
         self.raw_device = raw_device
+        self._endpoint = None
 
     def connect(self):
         """Connect to the usb device.

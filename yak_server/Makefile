@@ -29,7 +29,7 @@ unittest: FORCE
 
 coverage: FORCE
 	nose2 $(NOSE_OPTIONS) test.unit -C  --coverage yak_server --coverage-report html
-	@sed -n 's/.*<span class="pc_cov">\(100%\)<\/span>.*/\nCoverage: \1\n/ p' htmlcov/index.html
+	@sed -n 's/.*<span class="pc_cov">\([0-9]\?[0-9]\?[0-9]%\)<\/span>.*/\nCoverage: \1\n/ p' htmlcov/index.html
 
 pypytest: clean FORCE
 	python setup.py bdist_wheel
