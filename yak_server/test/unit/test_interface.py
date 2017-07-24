@@ -22,7 +22,7 @@ class TestUSBInterface(util.TestCase):
 
     def test_receives_event(self):
         stub_usbdevice = unittest.mock.Mock()
-        stub_usbdevice.read.side_effect = lambda n: b'abc'[:n]
+        stub_usbdevice.read.side_effect = lambda n, **kwargs: b'abc'[:n]
         stub_translator = unittest.mock.Mock()
         stub_translator.raw_data_to_event.side_effect = lambda x: x + b'_event'
         stub_translator.maximum_data_length.return_value = 1

@@ -91,11 +91,21 @@ class USBDevice:
 
         If there is no data to be read an empty bytes object is
         returned. The 'number_of_bytes' arguments gives the maximum
-        number of bytes read, if a shorter packet is received then
-        the length of the data returned is the length of that packet.
+        number of bytes to read. The function will block untill that
+        number of bytes has been received.
         """
+        return self._read_blocking(number_of_bytes)
+
+    def _read_blocking(self, number_of_bytes):
+        data = b''
+        while len(data) < number_of_bytes:
+            bytes_remaining = number_of_bytes - len(data)
+            data += self._read_non_blocking(bytes_remaining)
+        return data
+
+    def _read_non_blocking(self, number_of_bytes):
         try:
-            return self._endpoint.read(number_of_bytes)
+            return bytes(self._endpoint.read(number_of_bytes))
         except usb.core.USBError:
             return b''
 

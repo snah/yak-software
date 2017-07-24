@@ -5,45 +5,42 @@
 import time
 import usb
 
-from test import util
+import test.util # noqa
 
 import yak_server.usbdevice
 
 
-class TestSwitchInterfaceProtocol(util.TestCase):
+TIMEOUT = 0.1
+
+
+class TestSwitchInterfaceProtocol(test.util.TestCase):
     def test_button_press_and_release(self):
         device = self._get_device()
         device.connect()
 
-        while device.read(1):
+        try:
+            while device._endpoint.read(1):
+                pass
+        except usb.core.USBError:
             pass
 
         print('Press and hold the button on the test jig.')
 
-        #FIXME in actual code:
-        button_down_response = b''
-        while not button_down_response:
-            button_down_response = device.read(1)
-
-        #FIXME in actual code:
-        button_down_response = bytes(button_down_response)
+        button_down_response = device.read(1)
 
         self.assertEqual(button_down_response, b'\x01')
 
-        self.assertEqual(len(device.read(1)), 0)
+        try:
+            while device._endpoint.read(1):
+                self.fail('Unexpected data received.')
+        except usb.core.USBError:
+            pass
 
         print('Release the button on the test jig.')
 
-        #FIXME in actual code:
-        button_up_response = b''
-        while not button_up_response:
-            button_up_response = device.read(1)
-
-        #FIXME in actual code:
-        button_up_response = bytes(button_up_response)
+        button_up_response = device.read(1)
 
         self.assertEqual(button_up_response, b'\x00')
-
 
     def _get_device(self):
         devices = self._find_devices()

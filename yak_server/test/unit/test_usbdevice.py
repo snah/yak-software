@@ -2,15 +2,15 @@
 
 # pylint: disable = no-self-use, unused-argument
 
+import array
 import logging
 import unittest
 import unittest.mock
+import usb
 
-import test.util
+import test.util # noqa
 
 import yak_server.usbdevice
-
-import usb
 
 
 def patch_usb_find(match_count=1):
@@ -23,6 +23,23 @@ def patch_usb_find(match_count=1):
     def callable_mock():
         return mock
     return unittest.mock.patch('usb.core.find', new_callable=callable_mock)
+
+
+class StubUSBRead():
+    data = [ord('a') + i for i in range(26)]
+
+    def __init__(self):
+        self.count = -3
+
+    def __call__(self, number_of_bytes):
+        if self.count < 0:
+            self.count += 1
+            raise usb.USBError('')
+        else:
+            start = self.count
+            end = start + min(number_of_bytes, 2)
+            self.count += min(number_of_bytes, 2)
+            return array.array('B', self.data[start:end])
 
 
 class TestUSBDevice(test.util.TestCase):
@@ -205,22 +222,33 @@ class TestUSBDevice(test.util.TestCase):
         endpoint_direction_mock.assert_called_with(endpoint_address)
 
     def test_read(self):
+        stub_data = array.array('B', b'1234')
+        self.usb_device_mocks.endpoint.read.return_value = stub_data
         usb_device = self._make_usb_device()
         usb_device.connect()
 
         data = usb_device.read(4)
 
         self.usb_device_mocks.endpoint.read.assert_called_with(4)
-        self.assertEqual(data, self.usb_device_mocks.endpoint.read())
+        self.assertEqual(data, b'1234')
 
-    def test_read_returns_empty_bytes_object_on_timout(self):
-        self.usb_device_mocks.endpoint.read.side_effect = usb.USBError('')
+    def test_read_with_split_data(self):
+        self.usb_device_mocks.endpoint.read.side_effect = StubUSBRead()
         usb_device = self._make_usb_device()
         usb_device.connect()
 
         data = usb_device.read(4)
 
-        self.assertEqual(data, b'')
+        self.assertEqual(data, b'abcd')
+
+    def test_read_with_split_and_extra_data(self):
+        self.usb_device_mocks.endpoint.read.side_effect = StubUSBRead()
+        usb_device = self._make_usb_device()
+        usb_device.connect()
+
+        data = usb_device.read(5)
+
+        self.assertEqual(data, b'abcde')
 
     def test_write(self):
         usb_device = self._make_usb_device()
