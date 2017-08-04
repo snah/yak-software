@@ -86,6 +86,14 @@ class USBDevice:
         """Return if the device is an output."""
         return not self.is_input()
 
+    def flush(self):
+        """Flush the input buffer."""
+        try:
+            while self._endpoint.read(1):
+                pass
+        except usb.core.USBError:
+            pass
+
     def read(self, number_of_bytes):
         """Read a number of bytes from the device.
 

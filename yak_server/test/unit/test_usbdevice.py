@@ -26,20 +26,27 @@ def patch_usb_find(match_count=1):
 
 
 class StubUSBRead():
-    data = [ord('a') + i for i in range(26)]
+    data = [None, None, None] + [ord('a') + i for i in range(26)]
 
     def __init__(self):
-        self.count = -3
+        self.count = 0
 
     def __call__(self, number_of_bytes):
-        if self.count < 0:
-            self.count += 1
+        start = self.count
+        end = start + min(number_of_bytes, 2)
+        packet = self._make_packet(start, end)
+        self.count += len(packet) or 1
+        if not packet:
             raise usb.USBError('')
-        else:
-            start = self.count
-            end = start + min(number_of_bytes, 2)
-            self.count += min(number_of_bytes, 2)
-            return array.array('B', self.data[start:end])
+        return array.array('B', packet)
+
+    def _make_packet(self, start, end):
+        packet = []
+        for byte in self.data[start:end]:
+            if byte is None:
+                break
+            packet.append(byte)
+        return packet
 
 
 class TestUSBDevice(test.util.TestCase):
@@ -220,6 +227,18 @@ class TestUSBDevice(test.util.TestCase):
 
         self.assertFalse(usb_device.is_output())
         endpoint_direction_mock.assert_called_with(endpoint_address)
+
+    def test_flush_input_device(self):
+        read_stub = StubUSBRead()
+        read_stub.data = [ord('a'), ord('b'), None, ord('c'), ord('d')]
+        self.usb_device_mocks.endpoint.read.side_effect = read_stub
+        usb_device = self._make_usb_device()
+        usb_device.connect()
+
+        usb_device.flush()
+        data = usb_device.read(2)
+
+        self.assertEqual(data, b'cd')
 
     def test_read(self):
         stub_data = array.array('B', b'1234')
