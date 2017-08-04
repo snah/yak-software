@@ -5,7 +5,7 @@ PYTHON_FILES += setup.py
 
 NOSE_OPTIONS = 
 
-default: coverage lint
+default: functionaltest coverage lint
 
 clean:
 	find . -name __pycache__ -prune -exec rm -rf {} +
@@ -26,6 +26,9 @@ test: FORCE
 
 unittest: FORCE
 	nose2 $(NOSE_OPTIONS) test.unit
+
+functionaltest: FORCE
+	nose2 $(NOSE_OPTIONS) test.functional
 
 coverage: FORCE
 	nose2 $(NOSE_OPTIONS) test.unit -C  --coverage yak_server --coverage-report html
