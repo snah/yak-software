@@ -17,30 +17,23 @@ class TestSwitchInterfaceProtocol(test.util.TestCase):
     def test_button_press_and_release(self):
         device = self._get_device()
         device.connect()
+        device.flush()
 
-        try:
-            while device._endpoint.read(1):
-                pass
-        except usb.core.USBError:
-            pass
-
-        print('Press and hold the button on the test jig.')
+        self._press_button()
 
         button_down_response = device.read(1)
-
         self.assertEqual(button_down_response, b'\x01')
+        device.flush()
 
-        try:
-            while device._endpoint.read(1):
-                self.fail('Unexpected data received.')
-        except usb.core.USBError:
-            pass
-
-        print('Release the button on the test jig.')
-
+        self._release_button()
         button_up_response = device.read(1)
-
         self.assertEqual(button_up_response, b'\x00')
+
+    def _press_button(self):
+        print('Press and hold the button on the test jig.')
+
+    def _release_button(self):
+        print('Release the button on the test jig.')
 
     def _get_device(self):
         devices = self._find_devices()
