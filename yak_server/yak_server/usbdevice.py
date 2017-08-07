@@ -160,26 +160,15 @@ class USBDevice:
         try:
             self.raw_device.detach_kernel_driver(self.INTERFACE)
         except usb.core.USBError as exception:
-            self._handle_detach_kernel_driver_exception(exception)
-
-    def _handle_detach_kernel_driver_exception(self, exception):
-        msg = ('Error detaching kernel driver for interface {} of ' +
-               'device {}:\n{}').format(self.INTERFACE, self.raw_device,
-                                        str(exception))
-        _LOGGER.error(msg)
-        raise USBError(msg) from exception
+            self._handle_exception(self._detach_kernel_driver_error_message,
+                                   exception)
 
     def _set_configuration(self):
         try:
             self.raw_device.set_configuration()
         except usb.core.USBError as exception:
-            self._handle_set_configuration_exception(exception)
-
-    def _handle_set_configuration_exception(self, exception):
-        msg = ('Error setting configuration for device {}:\n{}').format(
-            self.raw_device, str(exception))
-        _LOGGER.error(msg)
-        raise USBError(msg)
+            self._handle_exception(self._set_configuration_error_message,
+                                   exception)
 
     def _claim_interface(self):
         _LOGGER.info('Claiming interface %d for device %s',
@@ -187,13 +176,8 @@ class USBDevice:
         try:
             usb.util.claim_interface(self.raw_device, self.INTERFACE)
         except usb.core.USBError as exception:
-            self._handle_claim_interface_exception(exception)
-
-    def _handle_claim_interface_exception(self, exception):
-        msg = 'Error claiming interface {} of device {}:\n{}'.format(
-            self.INTERFACE, self.device_info(), str(exception))
-        _LOGGER.error(msg)
-        raise USBError(msg) from exception
+            self._handle_exception(self._claim_interface_error_message,
+                                   exception)
 
     def _get_endpoint(self):
         active_configuration = self.raw_device.get_active_configuration()
@@ -203,3 +187,24 @@ class USBDevice:
     def device_info(self):
         """Return a string containing device information."""
         return repr(self.raw_device)
+
+    @staticmethod
+    def _handle_exception(make_message, exception):
+        msg = make_message(exception)
+        _LOGGER.error(msg)
+        raise USBError(msg) from exception
+
+    def _detach_kernel_driver_error_message(self, exception):
+        template = ('Error detaching kernel driver for interface {} of ' +
+                    'device {}:\n{}')
+        return template.format(self.INTERFACE, self.device_info(),
+                               str(exception))
+
+    def _set_configuration_error_message(self, exception):
+        template = ('Error setting configuration for device {}:\n{}')
+        return template.format(self.device_info(), str(exception))
+
+    def _claim_interface_error_message(self, exception):
+        template = 'Error claiming interface {} of device {}:\n{}'
+        return template.format(self.INTERFACE, self.device_info(),
+                               str(exception))

@@ -81,32 +81,30 @@ class TestUSBDevice(test.util.TestCase):
         self.assertEqual(usb_devices, [])
 
     def test_connect_detaches_kernel_driver(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_input_device()
 
         usb_device.connect()
 
         self.assertIn(usb_device.INTERFACE,
-                      fake_raw_device.detached_kernel_drivers)
+                      usb_device.raw_device.detached_kernel_drivers)
 
     def test_log_detaching_kernel_driver(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
         with self.assertLogs(self.LOGGER, level='DEBUG') as logs:
-            usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+            usb_device = self._make_fake_raw_input_device()
+
             usb_device.connect()
 
             log_output = '\n'.join(logs.output)
             self.assertIn('detaching', log_output.lower())
 
     def test_connect_succeeds_when_no_kernel_driver_attached(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
-        fake_raw_device.detached_kernel_drivers.add(usb_device.INTERFACE)
+        usb_device = self._make_fake_raw_input_device()
+        usb_device.raw_device.detached_kernel_drivers.add(usb_device.INTERFACE)
 
         usb_device.connect()
 
         self.assertIn(usb_device.INTERFACE,
-                      fake_raw_device.detached_kernel_drivers)
+                      usb_device.raw_device.detached_kernel_drivers)
 
     def test_connect_raises_exception_when_unable_to_detach_driver(self):
         stub_raw_device = unittest.mock.Mock()
@@ -130,12 +128,11 @@ class TestUSBDevice(test.util.TestCase):
                 pass
 
     def test_connect_sets_configuration(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_input_device()
 
         usb_device.connect()
 
-        self.assertEqual(fake_raw_device.configuration_number, 0)
+        self.assertEqual(usb_device.raw_device.configuration_number, 0)
 
     def test_connect_raises_exception_when_unable_to_set_configuration(self):
         stub_raw_device = unittest.mock.Mock()
@@ -160,17 +157,16 @@ class TestUSBDevice(test.util.TestCase):
                 pass
 
     def test_connect_claims_interface(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_input_device()
 
         usb_device.connect()
 
-        self.assertIn(usb_device.INTERFACE, fake_raw_device.claimed_interfaces)
+        self.assertIn(usb_device.INTERFACE,
+                      usb_device.raw_device.claimed_interfaces)
 
     def test_connect_logs_claim_interface(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
         with self.assertLogs('yak_server.usbdevice', level='DEBUG') as logs:
-            usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+            usb_device = self._make_fake_raw_input_device()
             usb_device.connect()
 
             log_output = '\n'.join(logs.output)
@@ -180,8 +176,7 @@ class TestUSBDevice(test.util.TestCase):
     def test_connect_raises_exception_when_unable_to_claim_interface(self):
         self.start_patch('yak_server.usbdevice.usb.util.claim_interface',
                          side_effect=usb.USBError(''))
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_input_device()
 
         with self.assertRaises(yak_server.usbdevice.USBError):
             usb_device.connect()
@@ -189,8 +184,7 @@ class TestUSBDevice(test.util.TestCase):
     def test_connect_logs_when_unable_to_claim_interface(self):
         self.start_patch('yak_server.usbdevice.usb.util.claim_interface',
                          side_effect=usb.USBError(''))
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_input_device()
 
         with self.assertLogs('yak_server.usbdevice', level='ERROR') as logs:
             try:
@@ -199,46 +193,37 @@ class TestUSBDevice(test.util.TestCase):
                 pass
 
     def test_is_input_returns_true_for_in_endpoint(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_input_device()
 
         usb_device.connect()
 
         self.assertTrue(usb_device.is_input())
 
     def test_is_input_returns_false_for_out_endpoint(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        interface = fake_raw_device.configuration.interface
-        interface.endpoint_list = [interface.out_endpoint]
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_output_device()
 
         usb_device.connect()
 
         self.assertFalse(usb_device.is_input())
 
     def test_is_output_returns_true_for_out_endpoint(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        interface = fake_raw_device.configuration.interface
-        interface.endpoint_list = [interface.out_endpoint]
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_output_device()
 
         usb_device.connect()
 
         self.assertTrue(usb_device.is_output())
 
     def test_is_output_returns_false_for_in_endpoint(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_input_device()
 
         usb_device.connect()
 
         self.assertFalse(usb_device.is_output())
 
     def test_flush_input_device(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        endpoint = fake_raw_device.configuration.interface.in_endpoint
+        usb_device = self._make_fake_raw_input_device()
+        endpoint = usb_device.raw_device.configuration.interface.in_endpoint
         endpoint.read_data = [ord('a'), ord('b'), None, ord('c'), ord('d')]
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
         usb_device.connect()
 
         usb_device.flush()
@@ -247,8 +232,7 @@ class TestUSBDevice(test.util.TestCase):
         self.assertEqual(data, b'cd')
 
     def test_read(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_input_device()
         usb_device.connect()
 
         data = usb_device.read(2)
@@ -256,10 +240,9 @@ class TestUSBDevice(test.util.TestCase):
         self.assertEqual(data, b'ab')
 
     def test_read_with_split_data(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        endpoint = fake_raw_device.configuration.interface.in_endpoint
+        usb_device = self._make_fake_raw_input_device()
+        endpoint = usb_device.raw_device.configuration.interface.in_endpoint
         endpoint.read_data = [ord('a'), ord('b'), None, ord('c'), ord('d')]
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
         usb_device.connect()
 
         data = usb_device.read(4)
@@ -267,10 +250,9 @@ class TestUSBDevice(test.util.TestCase):
         self.assertEqual(data, b'abcd')
 
     def test_read_with_split_and_extra_data(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        endpoint = fake_raw_device.configuration.interface.in_endpoint
+        usb_device = self._make_fake_raw_input_device()
+        endpoint = usb_device.raw_device.configuration.interface.in_endpoint
         endpoint.read_data = [ord('a'), ord('b'), None, ord('c'), ord('d')]
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
         usb_device.connect()
 
         data = usb_device.read(3)
@@ -278,10 +260,7 @@ class TestUSBDevice(test.util.TestCase):
         self.assertEqual(data, b'abc')
 
     def test_write(self):
-        fake_raw_device = fake_usb.FakeRawUSBDevice()
-        interface = fake_raw_device.configuration.interface
-        interface.endpoint_list = [interface.out_endpoint]
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        usb_device = self._make_fake_raw_output_device()
         usb_device.connect()
 
         number_of_bytes_written = usb_device.write(b'test')
@@ -323,3 +302,15 @@ class TestUSBDevice(test.util.TestCase):
                 usb_device.write(b'test')
             except yak_server.usbdevice.USBError:
                 pass
+
+    @staticmethod
+    def _make_fake_raw_input_device():
+        fake_raw_device = fake_usb.FakeRawUSBDevice()
+        return yak_server.usbdevice.USBDevice(fake_raw_device)
+
+    @staticmethod
+    def _make_fake_raw_output_device():
+        fake_raw_device = fake_usb.FakeRawUSBDevice()
+        interface = fake_raw_device.configuration.interface
+        interface.endpoint_list = [interface.out_endpoint]
+        return yak_server.usbdevice.USBDevice(fake_raw_device)
