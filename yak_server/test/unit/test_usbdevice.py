@@ -26,6 +26,8 @@ def patch_usb_find(match_count=1):
 
 
 class TestUSBDevice(test.util.TestCase):
+    LOGGER = 'yak_server.usbdevice'
+
     def setUp(self):
         self.search_parameters = {'vendor_id': 1337,
                                   'product_id': 42,
@@ -45,7 +47,7 @@ class TestUSBDevice(test.util.TestCase):
 
     @patch_usb_find(match_count=2)
     def test_find_usb_device_logs_parameters_and_results(self, usb_find_mock):
-        with self.assertLogs('yak_server.usbdevice', level='DEBUG') as logs:
+        with self.assertLogs(self.LOGGER, level='DEBUG') as logs:
             yak_server.usbdevice.find(**self.search_parameters)
 
             log_output = '\n'.join(logs.output)
@@ -87,13 +89,9 @@ class TestUSBDevice(test.util.TestCase):
         self.assertIn(usb_device.INTERFACE,
                       fake_raw_device.detached_kernel_drivers)
 
-    @unittest.skip
-    def test_connect_sets_configuration(self):
-        self.fail('TODO')
-
     def test_log_detaching_kernel_driver(self):
         fake_raw_device = fake_usb.FakeRawUSBDevice()
-        with self.assertLogs('yak_server.usbdevice', level='DEBUG') as logs:
+        with self.assertLogs(self.LOGGER, level='DEBUG') as logs:
             usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
             usb_device.connect()
 
@@ -111,21 +109,50 @@ class TestUSBDevice(test.util.TestCase):
                       fake_raw_device.detached_kernel_drivers)
 
     def test_connect_raises_exception_when_unable_to_detach_driver(self):
-        fake_raw_device = unittest.mock.MagicMock()
-        fake_raw_device.is_kernel_driver_active.return_value = True
-        fake_raw_device.detach_kernel_driver.side_effect = usb.USBError('')
-        usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
+        stub_raw_device = unittest.mock.Mock()
+        stub_raw_device.is_kernel_driver_active.return_value = True
+        stub_raw_device.detach_kernel_driver.side_effect = usb.USBError('')
+        usb_device = yak_server.usbdevice.USBDevice(stub_raw_device)
 
         with self.assertRaises(yak_server.usbdevice.USBError):
             usb_device.connect()
 
     def test_connect_logs_error_when_unable_to_detach_kernel_driver(self):
-        fake_raw_device = unittest.mock.Mock()
-        fake_raw_device.is_kernel_driver_active.return_value = True
-        fake_raw_device.detach_kernel_driver.side_effect = usb.USBError('')
+        stub_raw_device = unittest.mock.Mock()
+        stub_raw_device.is_kernel_driver_active.return_value = True
+        stub_raw_device.detach_kernel_driver.side_effect = usb.USBError('')
+        usb_device = yak_server.usbdevice.USBDevice(stub_raw_device)
+
+        with self.assertLogs(logger=self.LOGGER, level='ERROR') as logs:
+            try:
+                usb_device.connect()
+            except yak_server.usbdevice.USBError:
+                pass
+
+    def test_connect_sets_configuration(self):
+        fake_raw_device = fake_usb.FakeRawUSBDevice()
         usb_device = yak_server.usbdevice.USBDevice(fake_raw_device)
 
-        with self.assertLogs(logger='yak_server.usbdevice',
+        usb_device.connect()
+
+        self.assertEqual(fake_raw_device.configuration_number, 0)
+
+    def test_connect_raises_exception_when_unable_to_set_configuration(self):
+        stub_raw_device = unittest.mock.Mock()
+        stub_raw_device.is_kernel_driver_active.return_value = True
+        stub_raw_device.set_configuration.side_effect = usb.USBError('')
+        usb_device = yak_server.usbdevice.USBDevice(stub_raw_device)
+
+        with self.assertRaises(yak_server.usbdevice.USBError):
+            usb_device.connect()
+
+    def test_connect_logs_when_unable_to_set_configuration(self):
+        stub_raw_device = unittest.mock.Mock()
+        stub_raw_device.is_kernel_driver_active.return_value = True
+        stub_raw_device.set_configuration.side_effect = usb.USBError('')
+        usb_device = yak_server.usbdevice.USBDevice(stub_raw_device)
+
+        with self.assertLogs(logger=self.LOGGER,
                              level='ERROR') as logs:
             try:
                 usb_device.connect()

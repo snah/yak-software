@@ -8,6 +8,7 @@ class FakeRawUSBDevice:
     def __init__(self):
         self.detached_kernel_drivers = set()
         self.claimed_interfaces = set()
+        self.configuration_number = None
         self.configuration = FakeUSBConfiguration()
         self._ctx = FakeUSBContext()
 
@@ -20,7 +21,12 @@ class FakeRawUSBDevice:
         self.detached_kernel_drivers.add(interface_number)
 
     def get_active_configuration(self):
+        if self.configuration_number is None:
+            raise AssertionError('You should set the configuration first.')
         return self.configuration
+
+    def set_configuration(self, configuration=0):
+        self.configuration_number = configuration
 
 
 class FakeUSBConfiguration:
@@ -79,4 +85,6 @@ class FakeUSBContext:
         if device.is_kernel_driver_active(interface_number):
             msg = 'Kernel driver should be detached before claiming interface.'
             raise AssertionError(msg)
+        if device.configuration_number is None:
+            raise AssertionError('You should set the configuration first.')
         device.claimed_interfaces.add(interface_number)

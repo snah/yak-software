@@ -57,7 +57,7 @@ class USBDevice:
     """Provide an interface to a connected USB device."""
 
     INTERFACE = 0
-    ENDPOINT = 0
+    IN_ENDPOINT = 0
 
     def __init__(self, raw_device):
         """Initialize the device given a pyusb device."""
@@ -69,10 +69,11 @@ class USBDevice:
 
         Detach the kernel driver if it is attached and then claim
         the interface. This must be done before calling any of the other
-        methods of this class. Changes to the INTERFACE and ENDPOINT
+        methods of this class. Changes to the INTERFACE and IN_ENDPOINT
         attributes after this point are not supported.
         """
         self._detach_kernel_driver_if_attached()
+        self._set_configuration()
         self._claim_interface()
         self._endpoint = self._get_endpoint()
 
@@ -168,6 +169,18 @@ class USBDevice:
         _LOGGER.error(msg)
         raise USBError(msg) from exception
 
+    def _set_configuration(self):
+        try:
+            self.raw_device.set_configuration()
+        except usb.core.USBError as exception:
+            self._handle_set_configuration_exception(exception)
+
+    def _handle_set_configuration_exception(self, exception):
+        msg = ('Error setting configuration for device {}:\n{}').format(
+            self.raw_device, str(exception))
+        _LOGGER.error(msg)
+        raise USBError(msg)
+
     def _claim_interface(self):
         _LOGGER.info('Claiming interface %d for device %s',
                      self.INTERFACE, self.device_info())
@@ -185,7 +198,7 @@ class USBDevice:
     def _get_endpoint(self):
         active_configuration = self.raw_device.get_active_configuration()
         interface = active_configuration.interfaces()[self.INTERFACE]
-        return interface.endpoints()[self.ENDPOINT]
+        return interface.endpoints()[self.IN_ENDPOINT]
 
     def device_info(self):
         """Return a string containing device information."""
