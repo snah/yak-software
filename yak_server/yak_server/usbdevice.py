@@ -53,6 +53,24 @@ def find(**search_parameters):
     return devices
 
 
+def _managed(message_template):
+    """Manage execution of the decorated function.
+
+    The function call will be logged and any exceptions from pyusb
+    will be logged and reraised as our own USBError.
+    """
+    # pylint: disable = protected_access
+    def outer(function):
+        def wrapper(self, *args, **kwargs):
+            _LOGGER.info(self._format_message(message_template))
+            try:
+                return function(self, *args, **kwargs)
+            except usb.core.USBError as exception:
+                self._handle_exception(message_template, exception)
+        return wrapper
+    return outer
+
+
 class USBDevice:
     """Provide an interface to a connected USB device."""
 
@@ -132,6 +150,10 @@ class USBDevice:
         except usb.core.USBError as exception:
             self._handle_write_exception(exception)
 
+    def device_info(self):
+        """Return a string containing device information."""
+        return repr(self.raw_device)
+
     def _handle_incomplete_write(self, bytes_written, data):
         msg = 'Not all data written to interface {} of device {}.'.format(
             self.INTERFACE, self.device_info())
@@ -154,57 +176,30 @@ class USBDevice:
     def _is_kernel_driver_attached(self):
         return self.raw_device.is_kernel_driver_active(self.INTERFACE)
 
+    @_managed('detaching kernel driver for interface {interface} of ' +
+              'device {device}')
     def _detach_kernel_driver(self):
-        _LOGGER.info('Detaching kernel driver from device %s',
-                     self.device_info())
-        try:
-            self.raw_device.detach_kernel_driver(self.INTERFACE)
-        except usb.core.USBError as exception:
-            self._handle_exception(self._detach_kernel_driver_error_message,
-                                   exception)
+        self.raw_device.detach_kernel_driver(self.INTERFACE)
 
+    @_managed('setting configuration for device {device}')
     def _set_configuration(self):
-        try:
-            self.raw_device.set_configuration()
-        except usb.core.USBError as exception:
-            self._handle_exception(self._set_configuration_error_message,
-                                   exception)
+        self.raw_device.set_configuration()
 
+    @_managed('claiming interface {interface} of device {device}')
     def _claim_interface(self):
-        _LOGGER.info('Claiming interface %d for device %s',
-                     self.INTERFACE, self.device_info())
-        try:
-            usb.util.claim_interface(self.raw_device, self.INTERFACE)
-        except usb.core.USBError as exception:
-            self._handle_exception(self._claim_interface_error_message,
-                                   exception)
+        usb.util.claim_interface(self.raw_device, self.INTERFACE)
 
     def _get_endpoint(self):
         active_configuration = self.raw_device.get_active_configuration()
         interface = active_configuration.interfaces()[self.INTERFACE]
         return interface.endpoints()[self.IN_ENDPOINT]
 
-    def device_info(self):
-        """Return a string containing device information."""
-        return repr(self.raw_device)
+    def _format_message(self, template, **kwargs):
+        return template.format(interface=self.INTERFACE,
+                               device=self.device_info(), **kwargs)
 
-    @staticmethod
-    def _handle_exception(make_message, exception):
-        msg = make_message(exception)
+    def _handle_exception(self, template, exception):
+        error_template = 'Error ' + template + ':\n{exception}'
+        msg = self._format_message(error_template, exception=str(exception))
         _LOGGER.error(msg)
         raise USBError(msg) from exception
-
-    def _detach_kernel_driver_error_message(self, exception):
-        template = ('Error detaching kernel driver for interface {} of ' +
-                    'device {}:\n{}')
-        return template.format(self.INTERFACE, self.device_info(),
-                               str(exception))
-
-    def _set_configuration_error_message(self, exception):
-        template = ('Error setting configuration for device {}:\n{}')
-        return template.format(self.device_info(), str(exception))
-
-    def _claim_interface_error_message(self, exception):
-        template = 'Error claiming interface {} of device {}:\n{}'
-        return template.format(self.INTERFACE, self.device_info(),
-                               str(exception))
