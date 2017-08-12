@@ -59,7 +59,7 @@ def _managed(message_template):
     The function call will be logged and any exceptions from pyusb
     will be logged and reraised as our own USBError.
     """
-    # pylint: disable = protected_access
+    # pylint: disable = protected-access
     def outer(function):
         def wrapper(self, *args, **kwargs):
             _LOGGER.info(self._format_message(message_template))
@@ -123,19 +123,6 @@ class USBDevice:
         """
         return self._read_blocking(number_of_bytes)
 
-    def _read_blocking(self, number_of_bytes):
-        data = b''
-        while len(data) < number_of_bytes:
-            bytes_remaining = number_of_bytes - len(data)
-            data += self._read_non_blocking(bytes_remaining)
-        return data
-
-    def _read_non_blocking(self, number_of_bytes):
-        try:
-            return bytes(self._endpoint.read(number_of_bytes))
-        except usb.core.USBError:
-            return b''
-
     def write(self, data):
         """Write the given bytes to the device.
 
@@ -150,9 +137,28 @@ class USBDevice:
         except usb.core.USBError as exception:
             self._handle_write_exception(exception)
 
+    def class_identifier(self):
+        """Return a tuple that uniquely identifies the device class."""
+        return (self.raw_device.idVendor,
+                self.raw_device.idProduct,
+                self.raw_device.bcdDevice)
+
     def device_info(self):
         """Return a string containing device information."""
         return repr(self.raw_device)
+
+    def _read_blocking(self, number_of_bytes):
+        data = b''
+        while len(data) < number_of_bytes:
+            bytes_remaining = number_of_bytes - len(data)
+            data += self._read_non_blocking(bytes_remaining)
+        return data
+
+    def _read_non_blocking(self, number_of_bytes):
+        try:
+            return bytes(self._endpoint.read(number_of_bytes))
+        except usb.core.USBError:
+            return b''
 
     def _handle_incomplete_write(self, bytes_written, data):
         msg = 'Not all data written to interface {} of device {}.'.format(

@@ -4,7 +4,35 @@ from yak_server import usbdevice
 from yak_server import translators
 
 
-class USBInterface:
+class Interface:
+    """Abstract interface class.
+
+    An interface is any object that allows the server to communicate
+    with the outside world.
+
+    Subclasses should at least implement 'get_event' and
+    'send_command'.
+    """
+
+    def initialize(self):
+        """Initialize the interface so it is ready to use."""
+
+    def get_event(self):
+        """Return the next event from the interface.
+
+        Subclasses should overwrite this.
+        """
+        raise NotImplementedError()
+
+    def send_command(self, command):
+        """Send a command to the interface.
+
+        Subclasses should overwrite this.
+        """
+        raise NotImplementedError()
+
+
+class USBInterface(Interface):
     """An interface that is connected to a USB device."""
 
     def __init__(self, usb_device, translator):
@@ -35,19 +63,21 @@ class USBInterface:
         self._usb_device.write(data)
 
 
-class InterfaceManager():
+class InterfaceManager:
     """Manages the various interfaces of the server."""
 
-    @staticmethod
-    def input_interfaces():
+    @classmethod
+    def input_interfaces(cls):
         """Return an iterable of all input devices."""
         devices = usbdevice.find(vendor_id=0x04d8, product_id=0x5900)
-        Translator = translators.SwitchInterfaceTranslator
-        return [USBInterface(device, Translator()) for device in devices]
+        return [cls._make_interface(device) for device in devices]
 
-    @staticmethod
-    def output_interfaces():
+    @classmethod
+    def output_interfaces(cls):
         """Return an iterable of all output devices."""
         devices = usbdevice.find(vendor_id=0x04d8, product_id=0x5901)
-        Translator = translators.ACInterfaceTranslator
-        return [USBInterface(device, Translator()) for device in devices]
+        return [cls._make_interface(device) for device in devices]
+
+    @classmethod
+    def _make_interface(cls, device):
+        return USBInterface(device, translators.make_usb_translator(device))

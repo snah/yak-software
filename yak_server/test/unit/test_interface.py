@@ -48,10 +48,17 @@ class TestUSBInterface(util.TestCase):
 
 
 class TestInterfaceManager(util.TestCase):
+    class StubRawDevice:
+        def __init__(self, class_id=(0x04d8, 0x5900, 0x0000)):
+            self.class_id = class_id
+
+        def class_identifier(self):
+            return self.class_id
+
     def test_find_input_interfaces(self):
         # pylint: disable = protected-access
         interface_manager = yak_server.interface.InterfaceManager()
-        connected_devices = ['device1', 'device2']
+        connected_devices = [self.StubRawDevice(), self.StubRawDevice()]
 
         usb_find_patch = unittest.mock.patch('yak_server.usbdevice.find',
                                              return_value=connected_devices)
@@ -67,7 +74,7 @@ class TestInterfaceManager(util.TestCase):
     def test_find_output_interfaces(self):
         # pylint: disable = protected-access
         interface_manager = yak_server.interface.InterfaceManager()
-        connected_devices = ['device1', 'device2']
+        connected_devices = [self.StubRawDevice(), self.StubRawDevice()]
 
         usb_find_patch = unittest.mock.patch('yak_server.usbdevice.find',
                                              return_value=connected_devices)

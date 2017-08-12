@@ -18,6 +18,13 @@ class LookupTable(dict):
             raise KeyError(value)
 
 
+def make_usb_translator(device):
+    """Make a translator for a usb device."""
+    device_class_identifier = device.class_identifier()
+    DeviceTranslator = _USB_DEVICE_TRANSLATORS[device_class_identifier]
+    return DeviceTranslator()
+
+
 class Translator:
     """Abstract translator class.
 
@@ -111,3 +118,9 @@ class ACInterfaceTranslator(LookupTranslator):
     translation_table = LookupTable({
         b'\x00': events.LampOffEvent,
         b'\x01': events.LampOnEvent})
+
+
+_USB_DEVICE_TRANSLATORS = {
+    (0x04d8, 0x5900, 0x0000): SwitchInterfaceTranslator,
+    (0x04d8, 0x5901, 0x0000): ACInterfaceTranslator,
+}
