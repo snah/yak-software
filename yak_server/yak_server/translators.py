@@ -18,11 +18,38 @@ class LookupTable(dict):
             raise KeyError(value)
 
 
-def make_usb_translator(device):
-    """Make a translator for a usb device."""
-    device_class_identifier = device.class_identifier()
-    DeviceTranslator = _USB_DEVICE_TRANSLATORS[device_class_identifier]
-    return DeviceTranslator()
+def create_usb_translator(device):
+    """Return a new translator for a usb device."""
+    return TranslatorFactory().create_usb_translator(device)
+
+
+class TranslatorFactory:
+    """Factory for translator classes."""
+
+    def create_usb_translator(self, device):
+        """Create a translator for a USB interface."""
+        TranslatorClass = self._usb_translator_class(device.class_identifier)
+        return TranslatorClass()
+
+    def _usb_translator_class(self, device_class_identifier):
+        return self._usb_translator_map[device_class_identifier]
+
+    @property
+    def _usb_translator_map(self):
+        usb_translators = self._usb_translator_classes()
+        translator_map = {translator.DEVICE_CLASS_ID: translator
+                          for translator in usb_translators}
+        return translator_map
+
+    def _usb_translator_classes(self):
+        for subclass in self._get_subclasses(USBTranslator):
+            if hasattr(subclass, 'DEVICE_CLASS_ID'):
+                yield subclass
+
+    def _get_subclasses(self, super_class):
+        for subclass in super_class.__subclasses__():
+            yield subclass
+            yield from self._get_subclasses(subclass)
 
 
 class Translator:
@@ -62,15 +89,19 @@ class Translator:
         raise ValueError("Unknown event type: '{}'".format(event))
 
 
+class USBTranslator(Translator):
+    """Baseclass for USB translators."""
+
+
 class LookupTranslator(Translator):
     """Translate raw data to events using a lookup table.
 
     Subclasses should overwrite the class attribute
-    'translation_table' that is a 'LookupTable' mapping raw data to
+    'TRANSLATION_TABLE' that is a 'LookupTable' mapping raw data to
     event classes.
     """
 
-    translation_table = None
+    TRANSLATION_TABLE = None
 
     def raw_data_to_event(self, raw_data):
         """Translate raw data to the corresponding event.
@@ -98,29 +129,25 @@ class LookupTranslator(Translator):
         return 1
 
     def _lookup_event_type(self, raw_data):
-        return self.translation_table.lookup(raw_data)
+        return self.TRANSLATION_TABLE.lookup(raw_data)
 
     def _lookup_raw_data(self, event):
-        return self.translation_table.reverse_lookup(type(event))
+        return self.TRANSLATION_TABLE.reverse_lookup(type(event))
 
 
-class SwitchInterfaceTranslator(LookupTranslator):
+class SwitchInterfaceTranslator(LookupTranslator, USBTranslator):
     """Translate USB messages from the switch interface to event."""
 
-    translation_table = LookupTable({
+    DEVICE_CLASS_ID = 0x04d8, 0x5900, 0x0000
+    TRANSLATION_TABLE = LookupTable({
         b'\x00': events.ButtonUpEvent,
         b'\x01': events.ButtonDownEvent})
 
 
-class ACInterfaceTranslator(LookupTranslator):
+class ACInterfaceTranslator(LookupTranslator, USBTranslator):
     """Translate USB messages from the switch interface to event."""
 
-    translation_table = LookupTable({
+    DEVICE_CLASS_ID = 0x04d8, 0x5901, 0x0000
+    TRANSLATION_TABLE = LookupTable({
         b'\x00': events.LampOffEvent,
         b'\x01': events.LampOnEvent})
-
-
-_USB_DEVICE_TRANSLATORS = {
-    (0x04d8, 0x5900, 0x0000): SwitchInterfaceTranslator,
-    (0x04d8, 0x5901, 0x0000): ACInterfaceTranslator,
-}

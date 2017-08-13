@@ -10,7 +10,8 @@ import yak_server.events
 
 class TestLookupTranslator(util.TestCase):
     class ConcreteLookupTranslator(yak_server.translators.LookupTranslator):
-        translation_table = yak_server.translators.LookupTable({
+        DEVICE_CLASS_ID = None
+        TRANSLATION_TABLE = yak_server.translators.LookupTable({
             b'a': yak_server.events.ButtonUpEvent,
             b'b': yak_server.events.ButtonDownEvent})
 

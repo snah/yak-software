@@ -80,4 +80,4 @@ class InterfaceManager:
 
     @classmethod
     def _make_interface(cls, device):
-        return USBInterface(device, translators.make_usb_translator(device))
+        return USBInterface(device, translators.create_usb_translator(device))

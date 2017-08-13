@@ -137,6 +137,7 @@ class USBDevice:
         except usb.core.USBError as exception:
             self._handle_write_exception(exception)
 
+    @property
     def class_identifier(self):
         """Return a tuple that uniquely identifies the device class."""
         return (self.raw_device.idVendor,

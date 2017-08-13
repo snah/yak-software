@@ -32,12 +32,12 @@ class TestSingleSwitchSingleLamp(util.TestCase):
 
         self.mock_switch_device = unittest.mock.Mock()
         self.mock_switch_device.read.side_effect = self.input_data_from_queue
-        self.mock_switch_device.class_identifier.return_value = (
+        self.mock_switch_device.class_identifier = (
             0x04d8, 0x5900, 0x0000)
 
         self.mock_ac_device = unittest.mock.Mock()
         self.mock_ac_device.write.side_effect = self.queue_output_data
-        self.mock_ac_device.class_identifier.return_value = (
+        self.mock_ac_device.class_identifier = (
             0x04d8, 0x5901, 0x0000)
 
         self.input_queue = queue.Queue()
@@ -94,7 +94,7 @@ class TestSingleSwitchSingleLamp(util.TestCase):
 
     def assert_last_event(self, event):
         data = self.output_queue.get(timeout=MAX_WAIT_TIME)
-        ac_translator = translators.make_usb_translator(self.mock_ac_device)
+        ac_translator = translators.create_usb_translator(self.mock_ac_device)
         received_event = ac_translator.raw_data_to_event(data)
         self.assert_event_equal(received_event, event)
         self.assert_all_data_was_read()

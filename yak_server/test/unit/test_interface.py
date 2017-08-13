@@ -52,6 +52,7 @@ class TestInterfaceManager(util.TestCase):
         def __init__(self, class_id=(0x04d8, 0x5900, 0x0000)):
             self.class_id = class_id
 
+        @property
         def class_identifier(self):
             return self.class_id
 
