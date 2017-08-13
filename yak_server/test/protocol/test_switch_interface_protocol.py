@@ -5,7 +5,7 @@
 import time
 
 import test.util # noqa
-import test.doubles.fake_switch_device
+import test.doubles
 
 import yak_server.usbdevice
 

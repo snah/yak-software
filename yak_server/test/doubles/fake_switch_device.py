@@ -1,7 +1,5 @@
 import queue
 
-from yak_server import usbdevice
-
 
 class FakeSwitchDevice:
     def __init__(self):
@@ -17,13 +15,11 @@ class FakeSwitchDevice:
             self._read_queue.get()
 
     def read(self, number_of_bytes):
-        self._update_read_buffer()
-        if self._read_buffer:
-            response = self._read_buffer[:number_of_bytes]
-            self._read_buffer = self._read_buffer[len(response):]
-            return response
-        else:
-            raise usbdevice.USBError('No data available')
+        if len(self._read_buffer) < number_of_bytes:
+            self._read_buffer += self._read_queue.get()
+        response = self._read_buffer[:number_of_bytes]
+        self._read_buffer = self._read_buffer[len(response):]
+        return response
 
     @property
     def class_identifier(self):
