@@ -20,6 +20,8 @@ class Bases:
             device.connect()
             device.flush()
 
+            self.assertEqual(device.class_identifier, (0x04d8, 0x5900, 0x0000))
+
             self._press_button()
 
             button_down_response = device.read(1)
