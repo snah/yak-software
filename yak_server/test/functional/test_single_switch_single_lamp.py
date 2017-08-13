@@ -8,6 +8,7 @@ import unittest.mock
 import queue
 
 from test import util
+import test.doubles
 
 import yak_server.__main__
 import yak_server.usbdevice
@@ -30,17 +31,13 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         self.start_patch('yak_server.usbdevice.find',
                          side_effect=self.map_mock_device)
 
-        self.mock_switch_device = unittest.mock.Mock()
-        self.mock_switch_device.read.side_effect = self.input_data_from_queue
-        self.mock_switch_device.class_identifier = (
-            0x04d8, 0x5900, 0x0000)
+        self.mock_switch_device = test.doubles.FakeSwitchDevice()
 
         self.mock_ac_device = unittest.mock.Mock()
         self.mock_ac_device.write.side_effect = self.queue_output_data
         self.mock_ac_device.class_identifier = (
             0x04d8, 0x5901, 0x0000)
 
-        self.input_queue = queue.Queue()
         self.output_queue = queue.Queue()
 
         self.button_state = [False] * 8
@@ -51,13 +48,13 @@ class TestSingleSwitchSingleLamp(util.TestCase):
     def test_single_switch_single_lamp(self):
         self.start_server()
 
-        self.press_button(0)
+        self.toggle_button(0)
         self.assert_lamp_is_on()
 
-        self.press_button(0)
+        self.toggle_button(0)
         self.assert_lamp_is_off()
 
-        self.press_button(0)
+        self.toggle_button(0)
         self.assert_lamp_is_on()
 
         self.wait_for_server_shutdown()
@@ -76,15 +73,8 @@ class TestSingleSwitchSingleLamp(util.TestCase):
     def wait_for_server_shutdown(self):
         self.thread.join(2)
 
-    def input_data_from_queue(self, number_of_bytes):
-        # pylint: disable = unused-argument
-        return self.input_queue.get()
-
     def queue_output_data(self, data):
         self.output_queue.put(data)
-
-    def assert_all_data_was_read(self):
-        self.assertTrue(self.input_queue.empty())
 
     def assert_lamp_is_on(self):
         self.assert_last_event(yak_server.events.LampOnEvent())
@@ -97,14 +87,13 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         ac_translator = translators.create_usb_translator(self.mock_ac_device)
         received_event = ac_translator.raw_data_to_event(data)
         self.assert_event_equal(received_event, event)
-        self.assert_all_data_was_read()
 
-    def press_button(self, button_number):
+    def toggle_button(self, button_number):
         # pylint: disable = unused-argument
         # Only one button is used currently, so button_number is ignored.
         if self.button_state[0]:
-            self.input_queue.put(b'\x00')
+            self.mock_switch_device.release_button()
             self.button_state[0] = False
         else:
-            self.input_queue.put(b'\x01')
+            self.mock_switch_device.press_button()
             self.button_state[0] = True
