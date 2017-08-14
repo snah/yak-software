@@ -2,7 +2,7 @@
 
 # pylint: disable = no-self-use, unused-argument
 
-from test import util
+from tests import util
 
 import yak_server.translators
 import yak_server.events

@@ -4,8 +4,8 @@
 
 import time
 
-import test.util # noqa
-import test.doubles
+import tests.util
+import tests.doubles
 
 from yak_server import usbdevice
 
@@ -47,7 +47,7 @@ class SwitchInterfaceProtocolTest:
 
 
 class TestRealSwitchInterfaceProtocol(SwitchInterfaceProtocolTest,
-                                      test.util.RealDeviceTest):
+                                      tests.util.RealDeviceTest):
     def _press_button(self):
         print('Press and hold the button on the test jig.')
 
@@ -68,7 +68,7 @@ class TestRealSwitchInterfaceProtocol(SwitchInterfaceProtocolTest,
 
 
 class TestFakeSwitchInterfaceProtocol(SwitchInterfaceProtocolTest,
-                                      test.util.FakeDeviceTest):
+                                      tests.util.FakeDeviceTest):
     def _press_button(self):
         self.fake_switch_device.press_button()
 
@@ -76,5 +76,5 @@ class TestFakeSwitchInterfaceProtocol(SwitchInterfaceProtocolTest,
         self.fake_switch_device.release_button()
 
     def _get_device(self):
-        self.fake_switch_device = test.doubles.FakeSwitchDevice()
+        self.fake_switch_device = tests.doubles.FakeSwitchDevice()
         return self.fake_switch_device

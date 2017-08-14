@@ -5,7 +5,7 @@
 import unittest
 import unittest.mock
 
-from test import util
+from tests import util
 
 import yak_server.__main__
 

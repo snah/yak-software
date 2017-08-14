@@ -7,8 +7,8 @@ import unittest
 import unittest.mock
 import queue
 
-from test import util
-import test.doubles
+from tests import util
+import tests.doubles
 
 import yak_server.__main__
 from yak_server import usbdevice
@@ -31,7 +31,7 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         self.start_patch('yak_server.usbdevice.find',
                          side_effect=self.map_mock_device)
 
-        self.mock_switch_device = test.doubles.FakeSwitchDevice()
+        self.mock_switch_device = tests.doubles.FakeSwitchDevice()
 
         ac_class_id = usbdevice.DeviceClassID(vendor_id=0x04d8,
                                               product_id=0x5900,

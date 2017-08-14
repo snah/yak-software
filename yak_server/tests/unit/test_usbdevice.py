@@ -7,8 +7,8 @@ import unittest
 import unittest.mock
 import usb
 
-import test.util # noqa
-from test.doubles import fake_usb # noqa
+import tests.util
+from tests.doubles import fake_usb
 
 from yak_server import usbdevice
 
@@ -25,7 +25,7 @@ def patch_usb_find(match_count=1):
     return unittest.mock.patch('usb.core.find', new_callable=callable_mock)
 
 
-class TestFind(test.util.TestCase):
+class TestFind(tests.util.TestCase):
     LOGGER = 'yak_server.usbdevice'
 
     def setUp(self):
@@ -92,7 +92,7 @@ class TestFind(test.util.TestCase):
         self.assertEqual(usb_devices[0].raw_device, self.expected_raw_device)
 
 
-class TestUSBDevice(test.util.TestCase):
+class TestUSBDevice(tests.util.TestCase):
     LOGGER = 'yak_server.usbdevice'
 
     def setUp(self):
