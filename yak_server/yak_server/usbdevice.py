@@ -55,6 +55,14 @@ def find(**search_parameters):
     return devices
 
 
+def find_by_class_id(device_class_id):
+    """Return an iterable of USBDevices with the given device class id."""
+    search_parameters = {'vendor_id': device_class_id.vendor_id,
+                         'product_id': device_class_id.product_id,
+                         'release_number': device_class_id.release_number}
+    return find(**search_parameters)
+
+
 class DeviceClassID(ezvalue.Value):
     """A unique identifier for each usb device class.
 

@@ -63,9 +63,8 @@ class TestRealSwitchInterfaceProtocol(SwitchInterfaceProtocolTest,
             devices = self._find_devices()
         return devices[0]
 
-    @staticmethod
-    def _find_devices():
-        return usbdevice.find(vendor_id=0x04d8, product_id=0x5900)
+    def _find_devices(self):
+        return usbdevice.find_by_class_id(self.DEVICE_CLASS_ID)
 
 
 class TestFakeSwitchInterfaceProtocol(SwitchInterfaceProtocolTest,

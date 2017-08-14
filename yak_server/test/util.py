@@ -1,8 +1,6 @@
 import unittest
 import unittest.mock
 
-import yak_server.usbdevice
-
 
 class TestCase(unittest.TestCase):
     def start_patch(self, target, *args, **kwargs):
@@ -20,6 +18,7 @@ class TestCase(unittest.TestCase):
 
 
 class RealDeviceTest(TestCase):
+    # pylint: disable = no-member
     """Base class for testing the protocol of actual devices."""
 
     DEVICE_CLASS_ID = None
@@ -29,10 +28,7 @@ class RealDeviceTest(TestCase):
             self.skipTest('Device not connected.')
 
     def _device_connected(self):
-        search_parameters = {'vendor_id': self.DEVICE_CLASS_ID.vendor_id,
-                             'product_id': self.DEVICE_CLASS_ID.product_id,
-                             'release_number': self.DEVICE_CLASS_ID.release_number}
-        return bool(yak_server.usbdevice.find(**search_parameters))
+        return len(self._find_devices()) > 0
 
 
 class FakeDeviceTest(TestCase):
