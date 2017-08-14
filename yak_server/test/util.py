@@ -1,6 +1,8 @@
 import unittest
 import unittest.mock
 
+import yak_server.usbdevice
+
 
 class TestCase(unittest.TestCase):
     def start_patch(self, target, *args, **kwargs):
@@ -15,6 +17,24 @@ class TestCase(unittest.TestCase):
         event_timestamp = first.timestamp
         time_corrected_event = EventClass(second, timestamp=event_timestamp)
         self.assertEqual(first, time_corrected_event)
+
+
+class RealDeviceTest(TestCase):
+    """Base class for testing the protocol of actual devices."""
+
+    def setUp(self):
+        if not self._device_connected():
+            self.skipTest('Device not connected.')
+
+    def _device_connected(self):
+        search_parameters = {'vendor_id': self.DEVICE_CLASS_ID[0],
+                             'product_id': self.DEVICE_CLASS_ID[1],
+                             'device_release_number': self.DEVICE_CLASS_ID[2]}
+        return bool(yak_server.usbdevice.find(**search_parameters))
+
+
+class FakeDeviceTest(TestCase):
+    """Base class for testing the protocol of fakes."""
 
 
 def return_first(first, *args, **kwars):

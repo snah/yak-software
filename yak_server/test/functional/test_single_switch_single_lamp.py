@@ -35,8 +35,7 @@ class TestSingleSwitchSingleLamp(util.TestCase):
 
         self.mock_ac_device = unittest.mock.Mock()
         self.mock_ac_device.write.side_effect = self.queue_output_data
-        self.mock_ac_device.class_identifier = (
-            0x04d8, 0x5901, 0x0000)
+        self.mock_ac_device.class_identifier = (0x04d8, 0x5901, 0x0000)
 
         self.output_queue = queue.Queue()
 
