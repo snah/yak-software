@@ -11,7 +11,7 @@ from test import util
 import test.doubles
 
 import yak_server.__main__
-import yak_server.usbdevice
+from yak_server import usbdevice
 from yak_server import translators
 
 
@@ -33,9 +33,12 @@ class TestSingleSwitchSingleLamp(util.TestCase):
 
         self.mock_switch_device = test.doubles.FakeSwitchDevice()
 
+        ac_class_id = usbdevice.DeviceClassID(vendor_id=0x04d8,
+                                              product_id=0x5900,
+                                              release_number=0x0000)
         self.mock_ac_device = unittest.mock.Mock()
         self.mock_ac_device.write.side_effect = self.queue_output_data
-        self.mock_ac_device.class_identifier = (0x04d8, 0x5901, 0x0000)
+        self.mock_ac_device.class_identifier = ac_class_id
 
         self.output_queue = queue.Queue()
 

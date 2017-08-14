@@ -8,6 +8,7 @@ import unittest.mock
 from test import util
 
 import yak_server.interface
+import yak_server.usbdevice
 
 
 class TestUSBInterface(util.TestCase):
@@ -48,13 +49,21 @@ class TestUSBInterface(util.TestCase):
 
 
 class TestInterfaceManager(util.TestCase):
+    DEFAULT_DEVICE_CLASS_ID = yak_server.usbdevice.DeviceClassID(
+        vendor_id=0x04d8,
+        product_id=0x5900,
+        release_number=0x0000)
+
     class StubRawDevice:
-        def __init__(self, class_id=(0x04d8, 0x5900, 0x0000)):
-            self.class_id = class_id
+        def __init__(self, device_class_id=yak_server.usbdevice.DeviceClassID(
+                vendor_id=0x04d8,
+                product_id=0x5900,
+                release_number=0x0000)):
+            self._device_class_id = device_class_id
 
         @property
         def class_identifier(self):
-            return self.class_id
+            return self._device_class_id
 
     def test_find_input_interfaces(self):
         # pylint: disable = protected-access

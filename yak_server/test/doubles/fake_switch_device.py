@@ -1,5 +1,7 @@
 import queue
 
+from yak_server import usbdevice
+
 
 class FakeSwitchDevice:
     def __init__(self):
@@ -23,7 +25,9 @@ class FakeSwitchDevice:
 
     @property
     def class_identifier(self):
-        return (0x04d8, 0x5900, 0x0000)
+        return usbdevice.DeviceClassID(vendor_id=0x04d8,
+                                       product_id=0x5900,
+                                       release_number=0x0000)
 
     def press_button(self):
         self._read_queue.put(b'\x01')

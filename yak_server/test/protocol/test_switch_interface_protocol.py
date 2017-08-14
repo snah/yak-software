@@ -7,14 +7,17 @@ import time
 import test.util # noqa
 import test.doubles
 
-import yak_server.usbdevice
+from yak_server import usbdevice
 
 
 TIMEOUT = 0.1
 
 
 class SwitchInterfaceProtocolTest:
-    DEVICE_CLASS_ID = (0x04d8, 0x5900, 0x0000)
+    # pylint: disable = no-member
+    DEVICE_CLASS_ID = usbdevice.DeviceClassID(vendor_id=0x04d8,
+                                              product_id=0x5900,
+                                              release_number=0x0000)
 
     def test_button_press_and_release(self):
         self.device = self._get_device()
@@ -62,7 +65,7 @@ class TestRealSwitchInterfaceProtocol(SwitchInterfaceProtocolTest,
 
     @staticmethod
     def _find_devices():
-        return yak_server.usbdevice.find(vendor_id=0x04d8, product_id=0x5900)
+        return usbdevice.find(vendor_id=0x04d8, product_id=0x5900)
 
 
 class TestFakeSwitchInterfaceProtocol(SwitchInterfaceProtocolTest,

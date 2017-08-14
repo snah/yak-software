@@ -4,6 +4,8 @@
 import logging
 import usb
 
+import ezvalue
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ def _translate_search_parameters(search_parameters):
     """Translate search parameters into kwargs for pyusb."""
     parameter_translation_table = {'product_id': 'idProduct',
                                    'vendor_id': 'idVendor',
-                                   'device_release_number': 'bcdDevice'}
+                                   'release_number': 'bcdDevice'}
 
     new_params = dict()
 
@@ -37,7 +39,7 @@ def find(**search_parameters):
 
     The search parameters are given as keyword arguments with
     string value. Currently supported search parameters are
-    product_id, vendor_id and device_release_number, all of which
+    product_id, vendor_id and release_number, all of which
     expect an integer value.
     """
     _LOGGER.info('Scanning for usb devices with %s', search_parameters)
@@ -51,6 +53,18 @@ def find(**search_parameters):
         _LOGGER.info('Found usb device: %s', device.device_info())
 
     return devices
+
+
+class DeviceClassID(ezvalue.Value):
+    """A unique identifier for each usb device class.
+
+    The id is composed of the vendor id, product id and device
+    release number.
+    """
+
+    vendor_id = """Device vendor identifier (idVendor)."""
+    product_id = """Product identifier of the device (idProduct)."""
+    release_number = """Release number of the device (bcdDevice)"""
 
 
 def _managed(message_template):
@@ -139,10 +153,10 @@ class USBDevice:
 
     @property
     def class_identifier(self):
-        """Return a tuple that uniquely identifies the device class."""
-        return (self.raw_device.idVendor,
-                self.raw_device.idProduct,
-                self.raw_device.bcdDevice)
+        """Return a unique identifier for the device class."""
+        return DeviceClassID(vendor_id=self.raw_device.idVendor,
+                             product_id=self.raw_device.idProduct,
+                             release_number=self.raw_device.bcdDevice)
 
     def device_info(self):
         """Return a string containing device information."""

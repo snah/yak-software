@@ -31,7 +31,7 @@ class TestUSBDevice(test.util.TestCase):
     def setUp(self):
         self.search_parameters = {'vendor_id': 1337,
                                   'product_id': 42,
-                                  'device_release_number': 3}
+                                  'release_number': 3}
         self.expected_raw_device = {'idVendor': 1337,
                                     'idProduct': 42,
                                     'bcdDevice': 3}

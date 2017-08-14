@@ -22,14 +22,16 @@ class TestCase(unittest.TestCase):
 class RealDeviceTest(TestCase):
     """Base class for testing the protocol of actual devices."""
 
+    DEVICE_CLASS_ID = None
+
     def setUp(self):
         if not self._device_connected():
             self.skipTest('Device not connected.')
 
     def _device_connected(self):
-        search_parameters = {'vendor_id': self.DEVICE_CLASS_ID[0],
-                             'product_id': self.DEVICE_CLASS_ID[1],
-                             'device_release_number': self.DEVICE_CLASS_ID[2]}
+        search_parameters = {'vendor_id': self.DEVICE_CLASS_ID.vendor_id,
+                             'product_id': self.DEVICE_CLASS_ID.product_id,
+                             'release_number': self.DEVICE_CLASS_ID.release_number}
         return bool(yak_server.usbdevice.find(**search_parameters))
 
 

@@ -1,6 +1,7 @@
 """Defines translators for various interfaces."""
 
 from yak_server import events
+from yak_server import usbdevice
 
 
 class LookupTable(dict):
@@ -138,7 +139,9 @@ class LookupTranslator(Translator):
 class SwitchInterfaceTranslator(LookupTranslator, USBTranslator):
     """Translate USB messages from the switch interface to event."""
 
-    DEVICE_CLASS_ID = 0x04d8, 0x5900, 0x0000
+    DEVICE_CLASS_ID = usbdevice.DeviceClassID(vendor_id=0x04d8,
+                                              product_id=0x5900,
+                                              release_number=0x0000)
     TRANSLATION_TABLE = LookupTable({
         b'\x00': events.ButtonUpEvent,
         b'\x01': events.ButtonDownEvent})
@@ -147,7 +150,9 @@ class SwitchInterfaceTranslator(LookupTranslator, USBTranslator):
 class ACInterfaceTranslator(LookupTranslator, USBTranslator):
     """Translate USB messages from the switch interface to event."""
 
-    DEVICE_CLASS_ID = 0x04d8, 0x5901, 0x0000
+    DEVICE_CLASS_ID = usbdevice.DeviceClassID(vendor_id=0x04d8,
+                                              product_id=0x5901,
+                                              release_number=0x0000)
     TRANSLATION_TABLE = LookupTable({
         b'\x00': events.LampOffEvent,
         b'\x01': events.LampOnEvent})
