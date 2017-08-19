@@ -31,7 +31,7 @@ class TestSingleSwitchSingleLamp(util.TestCase):
         self.start_patch('yak_server.usbdevice.find',
                          side_effect=self.map_mock_device)
 
-        self.mock_switch_device = tests.doubles.FakeSwitchDevice()
+        self.mock_switch_device = tests.doubles.FakeSwitchDeviceV0_0_0()
 
         ac_class_id = usbdevice.DeviceClassID(vendor_id=0x04d8,
                                               product_id=0x5900,

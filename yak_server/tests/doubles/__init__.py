@@ -1,1 +1,1 @@
-from .fake_switch_device import FakeSwitchDevice # noqa
+from .fake_switch_device import * # noqa
